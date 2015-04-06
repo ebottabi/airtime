@@ -5030,6 +5030,7 @@ function SelectionManager() {
 				if (cell && cellIsAllDay(cell)) {
 					dates = [ cellDate(origCell), cellDate(cell) ].sort(cmp);
 					renderSelection(dates[0], dates[1], true);
+					return false;
 				}else{
 					dates = null;
 				}

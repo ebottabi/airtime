@@ -325,7 +325,12 @@ function createFullCalendar(data){
         eventAfterRender: eventAfterRender,
         eventDrop: eventDrop,
         eventResize: eventResize,
-        windowResize: windowResize
+        windowResize: windowResize,
+        selectable: true,
+        selectHelper: true,
+        selectOverlap: function(event) {
+            return false;
+        }
     });
 }
 

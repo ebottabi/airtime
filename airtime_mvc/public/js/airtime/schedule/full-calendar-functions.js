@@ -49,6 +49,20 @@ function dayClick(date, allDay, jsEvent, view){
             selected = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes());
         }
 
+        //Albert hack:
+        if(view.name === "month")
+        {
+            var dayEvents = $('#schedule_calendar').fullCalendar('clientEvents', function (e) {
+                if (e.end.getDate() === selected.getDate()) {
+                    return true;
+                }
+            });
+            if (dayEvents.length > 0) {
+                selected = dayEvents[dayEvents.length - 1].end;
+                console.log(selected);
+            }
+        }
+
         if(selected >= today) {
             var addShow = $('.add-button');
 
@@ -77,6 +91,7 @@ function dayClick(date, allDay, jsEvent, view){
             var startTime = 0;
             // get start time value on the form
             if(view.name === "month") {
+                /*
                 startTime_string = $("#add_show_start_time").val();
                 var startTime_info = startTime_string.split(':');
                 if (startTime_info.length == 2) {
@@ -85,32 +100,43 @@ function dayClick(date, allDay, jsEvent, view){
                     if (!isNaN(start_time_temp)) {
                         startTime = start_time_temp;
                     }
-                }
+                }*/
+                startTime = selected;
+                startTime_string = moment(startTime).format("HH:mm");
+                //startTime_string = startTime.getHours() + ":" + startTime.getMinutes().toString();
             }else{
                 // if in day or week view, selected has all the time info as well
                 // so we don't ahve to calculate it explicitly
-                startTime_string = pad(selected.getHours(),2)+":"+pad(selected.getMinutes(),2)
-                startTime = 0
+                //startTime_string = pad(selected.getHours(),2)+":"+pad(selected.getMinutes(),2);
+                startTime = selected;
+                startTime_string = moment(startTime).format("HH:mm");
             }
 
             // calculate endDateTime
-            var endDateTime = new Date(selected.getTime() + startTime + duration);
+            //var endDateTime = new Date(startTime + duration);
+            var endDateTime = moment(startTime).add(1, 'hours');
 
             chosenDate = selected.getFullYear() + '-' + pad(selected.getMonth()+1,2) + '-' + pad(selected.getDate(),2);
-            var endDateFormat = endDateTime.getFullYear() + '-' + pad(endDateTime.getMonth()+1,2) + '-' + pad(endDateTime.getDate(),2);
+            //var endDateFormat = endDateTime.getFullYear() + '-' + pad(endDateTime.getMonth()+1,2) + '-' + pad(endDateTime.getDate(),2);
+            var endDateFormat = endDateTime.format('YYYY-MM-DD');
+            var endTimeString = endDateTime.format("HH:mm");
 
             $("#add_show_start_date").val(chosenDate);
             $("#add_show_end_date_no_repeat").val(endDateFormat);
             $("#add_show_end_date").val(endDateFormat);
-            if(view.name !== "month") {
-                var endTimeString = pad(endDateTime.getHours(),2)+":"+pad(endDateTime.getMinutes(),2);
+            //if(view.name !== "month") {
+                //var endTimeString =  //pad(endDateTime.getHours(),2)+":"+pad(endDateTime.getMinutes(),2);
                 $("#add_show_start_time").val(startTime_string)
                 $("#add_show_end_time").val(endTimeString)
-            }
+            //}
             $("#schedule-show-when").show();
+
+            console.log(startTime, endDateTime);
+            $('#schedule_calendar').fullCalendar('select', startTime, endDateTime);
 
             openAddShowForm();
         }
+        return false; //Prevents text highlighting
     }
 }
 
