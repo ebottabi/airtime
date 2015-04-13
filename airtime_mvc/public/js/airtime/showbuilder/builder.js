@@ -589,10 +589,13 @@ var AIRTIME = (function(AIRTIME){
                 else if (aData.empty === true) {
                     //remove the column classes from all tds.
                     $nRow.find('td').removeClass();
-                    
+
                     //$node = $(nRow.children[0]).replaceWith(emptyNode);;
                     //$node.html('');
-                    $node.empty();
+                    if ($node) {
+                        $node.empty();
+                    }
+
                     
                     sSeparatorHTML = '<span>'+$.i18n._("Show Empty")+'</span>';
                     cl = cl + " sb-empty odd";
