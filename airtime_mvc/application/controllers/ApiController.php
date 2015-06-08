@@ -1,4 +1,5 @@
 <?php
+require_once('TuneIn.php');
 
 class ApiController extends Zend_Controller_Action
 {
@@ -72,6 +73,7 @@ class ApiController extends Zend_Controller_Action
             print _('You are not allowed to access this resource.');
             exit;
         }
+        return true;
     }
 
     public function versionAction()
@@ -156,7 +158,7 @@ class ApiController extends Zend_Controller_Action
      */
     public function liveInfoAction()
     {
-        if (Application_Model_Preference::GetAllow3rdPartyApi()) {
+        if (Application_Model_Preference::GetAllow3rdPartyApi() || $this->checkAuth()) {
             // disable the view and the layout
             $this->view->layout()->disableLayout();
             $this->_helper->viewRenderer->setNoRender(true);
@@ -251,7 +253,7 @@ class ApiController extends Zend_Controller_Action
      */
     public function liveInfoV2Action()
     {
-        if (Application_Model_Preference::GetAllow3rdPartyApi()) {
+        if (Application_Model_Preference::GetAllow3rdPartyApi() || $this->checkAuth()) {
             // disable the view and the layout
             $this->view->layout()->disableLayout();
             $this->_helper->viewRenderer->setNoRender(true);
@@ -359,7 +361,7 @@ class ApiController extends Zend_Controller_Action
     
     public function weekInfoAction()
     {
-        if (Application_Model_Preference::GetAllow3rdPartyApi()) {
+        if (Application_Model_Preference::GetAllow3rdPartyApi() || $this->checkAuth()) {
             // disable the view and the layout
             $this->view->layout()->disableLayout();
             $this->_helper->viewRenderer->setNoRender(true);
@@ -478,7 +480,7 @@ class ApiController extends Zend_Controller_Action
      */
     public function showLogoAction() 
     {
-        if (Application_Model_Preference::GetAllow3rdPartyApi()) {
+        if (Application_Model_Preference::GetAllow3rdPartyApi() || $this->checkAuth()) {
             $request = $this->getRequest();
             $showId = $request->getParam('id');
 
@@ -509,7 +511,7 @@ class ApiController extends Zend_Controller_Action
      */
     public function stationMetadataAction()
     {
-        if (Application_Model_Preference::GetAllow3rdPartyApi()) {
+        if (Application_Model_Preference::GetAllow3rdPartyApi() || $this->checkAuth()) {
             // disable the view and the layout
             $this->view->layout()->disableLayout();
             $this->_helper->viewRenderer->setNoRender(true);
@@ -523,6 +525,7 @@ class ApiController extends Zend_Controller_Action
             $result["description"] = Application_Model_Preference::GetStationDescription();
             $result["timezone"] = Application_Model_Preference::GetDefaultTimezone();
             $result["locale"] = Application_Model_Preference::GetDefaultLocale();
+            $result["stream_data"] = Application_Model_StreamSetting::getEnabledStreamData();
             
             // used by caller to determine if the airtime they are running or widgets in use is out of date.
             $result['AIRTIME_API_VERSION'] = AIRTIME_API_VERSION;
@@ -547,7 +550,7 @@ class ApiController extends Zend_Controller_Action
      */
     public function stationLogoAction() 
     {
-        if (Application_Model_Preference::GetAllow3rdPartyApi()) {
+        if (Application_Model_Preference::GetAllow3rdPartyApi() || $this->checkAuth()) {
             // disable the view and the layout
             $this->view->layout()->disableLayout();
             $this->_helper->viewRenderer->setNoRender(true);
@@ -614,6 +617,14 @@ class ApiController extends Zend_Controller_Action
                     $file = Application_Model_StoredFile::RecallById($file_id);
                     $now = new DateTime("now", new DateTimeZone("UTC"));
                     $file->setLastPlayedTime($now);
+
+                    // Push metadata to TuneIn
+                    if (Application_Model_Preference::getTuneinEnabled()) {
+                        $filePropelOrm = $file->getPropelOrm();
+                        $title = urlencode($filePropelOrm->getDbTrackTitle());
+                        $artist = urlencode($filePropelOrm->getDbArtistName());
+                        Application_Common_TuneIn::sendMetadataToTunein($title, $artist);
+                    }
                 }
             } else {
                 // webstream
@@ -1310,7 +1321,7 @@ class ApiController extends Zend_Controller_Action
     }
 
     public function getStreamParametersAction() {
-        $streams = array("s1", "s2", "s3");
+        $streams = array("s1", "s2", "s3", "s4");
         $stream_params = array();
         foreach ($streams as $s) {
             $stream_params[$s] =
@@ -1504,6 +1515,31 @@ class ApiController extends Zend_Controller_Action
 
         $this->_helper->json($result);
 
+    }
+
+    /**
+     * This function is called from PYPO (pypofetch) every 2 minutes and updates
+     * metadata on TuneIn if we haven't done so in the last 4 minutes. We have
+     * to do this because TuneIn turns off metadata if it has not received a
+     * request within 5 minutes. This is necessary for long tracks > 5 minutes.
+     */
+    public function updateMetadataOnTuneinAction()
+    {
+        if (!Application_Model_Preference::getTuneinEnabled()) {
+            $this->_helper->json->sendJson(array(0));
+        }
+
+        $lastTuneInMetadataUpdate = Application_Model_Preference::geLastTuneinMetadataUpdate();
+        if (time() - $lastTuneInMetadataUpdate >= 240) {
+            $metadata = $metadata = Application_Model_Schedule::getCurrentPlayingTrack();
+            if (!is_null($metadata)) {
+                Application_Common_TuneIn::sendMetadataToTunein(
+                    $metadata["title"],
+                    $metadata["artist"]
+                );
+            }
+        }
+        $this->_helper->json->sendJson(array(1));
     }
     
 }

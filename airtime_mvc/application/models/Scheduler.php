@@ -828,7 +828,8 @@ class Application_Model_Scheduler
                                 "fade_in = '{$file["fadein"]}', ".
                                 "fade_out = '{$file["fadeout"]}', ".
                                 "clip_length = '{$file["cliplength"]}', ".
-                                "position = {$pos} ".
+                                "position = {$pos}, ".
+                                "instance_id = {$instanceId} ".
                                 "WHERE id = {$sched["id"]}";
 
                             Application_Common_Database::prepareAndExecute(
@@ -1011,10 +1012,10 @@ class Application_Model_Scheduler
      */
     public function moveItem($selectedItems, $afterItems, $adjustSched = true)
     {
-        $startProfile = microtime(true);
+        //$startProfile = microtime(true);
 
         $this->con->beginTransaction();
-        $this->con->useDebug(true);
+        //$this->con->useDebug(true);
 
         try {
 
@@ -1023,8 +1024,8 @@ class Application_Model_Scheduler
             $this->validateRequest($afterItems);
 
             $endProfile = microtime(true);
-            Logging::debug("validating move request took:");
-            Logging::debug(floatval($endProfile) - floatval($startProfile));
+            //Logging::debug("validating move request took:");
+            //Logging::debug(floatval($endProfile) - floatval($startProfile));
 
             $afterInstance = CcShowInstancesQuery::create()->findPK($afterItems[0]["instance"], $this->con);
 
@@ -1065,18 +1066,18 @@ class Application_Model_Scheduler
 
                 $this->removeGaps($instance, $schedIds);
 
-                $endProfile = microtime(true);
-                Logging::debug("removing gaps from instance $instance:");
-                Logging::debug(floatval($endProfile) - floatval($startProfile));
+                //$endProfile = microtime(true);
+                //Logging::debug("removing gaps from instance $instance:");
+                //Logging::debug(floatval($endProfile) - floatval($startProfile));
             }
 
-            $startProfile = microtime(true);
+            //$startProfile = microtime(true);
 
             $this->insertAfter($afterItems, null, $movedData, $adjustSched, true);
 
-            $endProfile = microtime(true);
-            Logging::debug("inserting after removing gaps.");
-            Logging::debug(floatval($endProfile) - floatval($startProfile));
+            //$endProfile = microtime(true);
+            //Logging::debug("inserting after removing gaps.");
+            //Logging::debug(floatval($endProfile) - floatval($startProfile));
 
             $modified = array_keys($modifiedMap);
             //need to adjust shows we have moved items from.
@@ -1086,7 +1087,7 @@ class Application_Model_Scheduler
                 $instance->updateScheduleStatus($this->con);
             }
 
-            $this->con->useDebug(false);
+            //$this->con->useDebug(false);
             $this->con->commit();
 
             Application_Model_RabbitMq::PushSchedule();

@@ -85,6 +85,12 @@ $pages = array(
                 'controller' => 'listenerstat',
                 'action'     => 'index',
                 'resource'   => 'listenerstat'
+            ),
+            array(
+                'label'      => _('Player'),
+                'module'     => 'default',
+                'controller' => 'player',
+                'action'     => 'customize'
             )
         )
     ),
@@ -128,7 +134,7 @@ $pages = array(
             ),
             array(
                 'label'      => _('User Manual'),
-                'uri'        => "http://sourcefabric.booktype.pro/airtime-25-for-broadcasters/",
+                'uri'        => "http://sourcefabric.booktype.pro/airtime-pro-for-broadcasters",
                 'target'     => "_blank"
             ),
             array(

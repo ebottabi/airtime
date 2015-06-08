@@ -60,16 +60,19 @@ class AirtimeAnalyzerServer:
             #Disable most pika/rabbitmq logging:
             pika_logger = logging.getLogger('pika')
             pika_logger.setLevel(logging.CRITICAL)
+            
+            boto_logger = logging.getLogger('auth')
+            boto_logger.setLevel(logging.CRITICAL)
         
         # Set up logging
         logFormatter = logging.Formatter("%(asctime)s [%(module)s] [%(levelname)-5.5s]  %(message)s")
         rootLogger = logging.getLogger()
         rootLogger.setLevel(self._log_level)
 
-        fileHandler = logging.handlers.RotatingFileHandler(filename=self._LOG_PATH, maxBytes=1024*1024*30,
-                                                  backupCount=8)
-        fileHandler.setFormatter(logFormatter)
-        rootLogger.addHandler(fileHandler)
+        #fileHandler = logging.handlers.RotatingFileHandler(filename=self._LOG_PATH, maxBytes=1024*1024*30,
+        #                                          backupCount=8)
+        #fileHandler.setFormatter(logFormatter)
+        #rootLogger.addHandler(fileHandler)
 
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(logFormatter)

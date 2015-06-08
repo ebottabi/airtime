@@ -32,6 +32,7 @@ class PreferenceController extends Zend_Controller_Action
         $form = new Application_Form_Preferences();
         $values = array();
 
+        session_start(); //Open session for writing.
 
         if ($request->isPost()) {
             $values = $request->getPost();
@@ -56,16 +57,22 @@ class PreferenceController extends Zend_Controller_Action
                     Application_Model_Preference::SetStationLogo($imagePath);
                 }
 
-                Application_Model_Preference::SetUploadToSoundcloudOption($values["UploadToSoundcloudOption"]);
+                Application_Model_Preference::setTuneinEnabled($values["enable_tunein"]);
+                Application_Model_Preference::setTuneinStationId($values["tunein_station_id"]);
+                Application_Model_Preference::setTuneinPartnerKey($values["tunein_partner_key"]);
+                Application_Model_Preference::setTuneinPartnerId($values["tunein_partner_id"]);
+
+                /*Application_Model_Preference::SetUploadToSoundcloudOption($values["UploadToSoundcloudOption"]);
                 Application_Model_Preference::SetSoundCloudDownloadbleOption($values["SoundCloudDownloadbleOption"]);
                 Application_Model_Preference::SetSoundCloudUser($values["SoundCloudUser"]);
                 Application_Model_Preference::SetSoundCloudPassword($values["SoundCloudPassword"]);
                 Application_Model_Preference::SetSoundCloudTags($values["SoundCloudTags"]);
                 Application_Model_Preference::SetSoundCloudGenre($values["SoundCloudGenre"]);
                 Application_Model_Preference::SetSoundCloudTrackType($values["SoundCloudTrackType"]);
-                Application_Model_Preference::SetSoundCloudLicense($values["SoundCloudLicense"]);
+                Application_Model_Preference::SetSoundCloudLicense($values["SoundCloudLicense"]);*/
 
                 $this->view->statusMsg = "<div class='success'>". _("Preferences updated.")."</div>";
+                $form = new Application_Form_Preferences();
                 $this->view->form = $form;
                 //$this->_helper->json->sendJson(array("valid"=>"true", "html"=>$this->view->render('preference/index.phtml')));
             } else {
@@ -88,6 +95,8 @@ class PreferenceController extends Zend_Controller_Action
 
         $this->view->headScript()->appendFile($baseUrl.'js/airtime/preferences/support-setting.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
         $this->view->statusMsg = "";
+
+        session_start(); //Open session for writing.
 
         $form = new Application_Form_SupportSettings();
         if ($request->isPost()) {
@@ -123,6 +132,8 @@ class PreferenceController extends Zend_Controller_Action
 
     public function removeLogoAction()
     {
+        session_start(); //Open session for writing.
+
         $this->view->layout()->disableLayout();
         // Remove reliance on .phtml files to render requests
         $this->_helper->viewRenderer->setNoRender(true);
@@ -140,12 +151,10 @@ class PreferenceController extends Zend_Controller_Action
 
         $this->view->headScript()->appendFile($baseUrl.'js/airtime/preferences/streamsetting.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
 
+        session_start(); //Open session for writing.
+
         // get current settings
-        $temp = Application_Model_StreamSetting::getStreamSetting();
-        $setting = array();
-        foreach ($temp as $t) {
-            $setting[$t['keyname']] = $t['value'];
-        }
+        $setting = Application_Model_StreamSetting::getStreamSetting();
 
         $name_map = array(
 				'ogg' => 'Ogg Vorbis',
@@ -180,9 +189,14 @@ class PreferenceController extends Zend_Controller_Action
         $num_of_stream = intval(Application_Model_Preference::GetNumOfStreams());
         $form = new Application_Form_StreamSetting();
 
-        $form->addElement('hash', 'csrf', array(
-           'salt' => 'unique'
-        ));
+        // $form->addElement('hash', 'csrf', array(
+        //     'salt' => 'unique'
+        // ));
+
+        $csrf_namespace = new Zend_Session_Namespace('csrf_namespace');
+        $csrf_element = new Zend_Form_Element_Hidden('csrf');
+        $csrf_element->setValue($csrf_namespace->authtoken)->setRequired('true')->removeDecorator('HtmlTag')->removeDecorator('Label');
+        $form->addElement($csrf_element);
 
         $form->setSetting($setting);
         $form->startFrom();
@@ -208,6 +222,7 @@ class PreferenceController extends Zend_Controller_Action
             $s1_data = array();
             $s2_data = array();
             $s3_data = array();
+            $s4_data = array();
             $values = array();
             foreach($postData as $k=>$v) {
                 $v = explode('=', urldecode($v));
@@ -223,6 +238,9 @@ class PreferenceController extends Zend_Controller_Action
                 } elseif (strpos($v[0], "s3_data") !== false) {
                    preg_match('/\[(.*)\]/', $v[0], $matches);
                     $s3_data[$matches[1]] = $v[1];
+                } elseif (strpos($v[0], "s4_data") !== false) {
+                   preg_match('/\[(.*)\]/', $v[0], $matches);
+                    $s4_data[$matches[1]] = $v[1];
                 } else {
                     $values[$v[0]] = $v[1];
                 }
@@ -230,6 +248,7 @@ class PreferenceController extends Zend_Controller_Action
             $values["s1_data"] = $s1_data;
             $values["s2_data"] = $s2_data;
             $values["s3_data"] = $s3_data;
+            $values["s4_data"] = $s4_data;
 
             $error = false;
             if ($form->isValid($values)) {
@@ -245,6 +264,7 @@ class PreferenceController extends Zend_Controller_Action
                 $s1_set_admin_pass = !empty($values["s1_data"]["admin_pass"]);
                 $s2_set_admin_pass = !empty($values["s2_data"]["admin_pass"]);
                 $s3_set_admin_pass = !empty($values["s3_data"]["admin_pass"]);
+                $s4_set_admin_pass = !empty($values["s4_data"]["admin_pass"]);
 
                 // this goes into cc_pref table
                 Application_Model_Preference::SetStreamLabelFormat($values['streamFormat']);
@@ -290,6 +310,7 @@ class PreferenceController extends Zend_Controller_Action
                     "s1_set_admin_pass"=>$s1_set_admin_pass,
                     "s2_set_admin_pass"=>$s2_set_admin_pass,
                     "s3_set_admin_pass"=>$s3_set_admin_pass,
+                    "s4_set_admin_pass"=>$s4_set_admin_pass,
                 ));
             } else {
                 $live_stream_subform->updateVariables();
@@ -422,6 +443,8 @@ class PreferenceController extends Zend_Controller_Action
 
     public function setSourceConnectionUrlAction()
     {
+        session_start(); //Open session for writing.
+
         $request = $this->getRequest();
         $type = $request->getParam("type", null);
         $url = urldecode($request->getParam("url", null));
@@ -440,8 +463,11 @@ class PreferenceController extends Zend_Controller_Action
 
     public function getAdminPasswordStatusAction()
     {
+        session_start(); //Open session for writing.
+
         $out = array();
-        for ($i=1; $i<=3; $i++) {
+        $num_of_stream = intval(Application_Model_Preference::GetNumOfStreams());
+        for ($i=1; $i<=$num_of_stream; $i++) {
             if (Application_Model_StreamSetting::getAdminPass('s'.$i)=='') {
                 $out["s".$i] = false;
             } else {
@@ -450,4 +476,78 @@ class PreferenceController extends Zend_Controller_Action
         }
         $this->_helper->json->sendJson($out);
     }
+
+    public function deleteAllFilesAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        // Only admin users should get here through ACL permissioning
+        // Only allow POST requests
+        $method = $_SERVER['REQUEST_METHOD'];
+        if (!($method == 'POST')) {
+            $this->getResponse()
+                 ->setHttpResponseCode(405)
+                 ->appendBody(_("Request method not accepted") . ": $method");
+            return;
+        }
+
+        $this->deleteFutureScheduleItems();
+        $this->deleteCloudFiles();
+        $this->deleteStoredFiles();
+
+        $this->getResponse()
+             ->setHttpResponseCode(200)
+             ->appendBody("OK");
+    }
+
+    private function deleteFutureScheduleItems() {
+        $utcTimezone = new DateTimeZone("UTC");
+        $nowDateTime = new DateTime("now", $utcTimezone);
+        $scheduleItems = CcScheduleQuery::create()
+            ->filterByDbEnds($nowDateTime->format("Y-m-d H:i:s"), Criteria::GREATER_THAN)
+            ->find();
+
+        // Delete all the schedule items
+        foreach ($scheduleItems as $i) {
+            // If this is the currently playing track, cancel the current show
+            if ($i->isCurrentItem()) {
+                $instanceId = $i->getDbInstanceId();
+                $instance = CcShowInstancesQuery::create()->findPk($instanceId);
+                $showId = $instance->getDbShowId();
+
+                // From ScheduleController
+                $scheduler = new Application_Model_Scheduler();
+                $scheduler->cancelShow($showId);
+                Application_Model_StoredFile::updatePastFilesIsScheduled();
+            }
+
+            $i->delete();
+        }
+    }
+
+    private function deleteCloudFiles() {
+        try {
+            $CC_CONFIG = Config::getConfig();
+
+            foreach ($CC_CONFIG["supportedStorageBackends"] as $storageBackend) {
+                $proxyStorageBackend = new ProxyStorageBackend($storageBackend);
+                $proxyStorageBackend->deleteAllCloudFileObjects();
+            }
+        } catch(Exception $e) {
+            Logging::info($e->getMessage());
+        }
+    }
+
+    private function deleteStoredFiles() {
+        // Delete all files from the database
+        $files = CcFilesQuery::create()->find();
+        foreach ($files as $file) {
+            $storedFile = new Application_Model_StoredFile($file, null);
+            // Delete the files quietly to avoid getting Sentry errors for
+            // every S3 file we delete.
+            $storedFile->delete(true);
+        }
+    }
+
 }

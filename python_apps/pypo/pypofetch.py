@@ -14,7 +14,7 @@ import traceback
 import pure
 
 from Queue import Empty
-from threading import Thread
+from threading import Thread, Timer
 from subprocess import Popen, PIPE
 
 from api_clients import api_client
@@ -216,98 +216,9 @@ class PypoFetch(Thread):
     TODO: This function needs to be way shorter, and refactored :/ - MK
     """
     def regenerate_liquidsoap_conf(self, setting):
-        existing = {}
+        self.restart_liquidsoap()
+        self.update_liquidsoap_connection_status()
 
-        setting = sorted(setting.items())
-        try:
-            fh = open('/etc/airtime/liquidsoap.cfg', 'r')
-        except IOError, e:
-            #file does not exist
-            self.restart_liquidsoap()
-            return
-
-        self.logger.info("Reading existing config...")
-        # read existing conf file and build dict
-        while True:
-            line = fh.readline()
-
-            # empty line means EOF
-            if not line:
-                break
-
-            line = line.strip()
-
-            if not len(line) or line[0] == "#":
-                continue
-
-            try:
-                key, value = line.split('=', 1)
-            except ValueError:
-                continue
-            key = key.strip()
-            value = value.strip()
-            value = value.replace('"', '')
-            if value == '' or value == "0":
-                value = ''
-            existing[key] = value
-        fh.close()
-
-        # dict flag for any change in config
-        change = {}
-        # this flag is to detect disable -> disable change
-        # in that case, we don't want to restart even if there are changes.
-        state_change_restart = {}
-        #restart flag
-        restart = False
-
-        self.logger.info("Looking for changes...")
-        # look for changes
-        for k, s in setting:
-            if "output_sound_device" in s[u'keyname'] or "icecast_vorbis_metadata" in s[u'keyname']:
-                dump, stream = s[u'keyname'].split('_', 1)
-                state_change_restart[stream] = False
-                # This is the case where restart is required no matter what
-                if (existing[s[u'keyname']] != str(s[u'value'])):
-                    self.logger.info("'Need-to-restart' state detected for %s...", s[u'keyname'])
-                    restart = True;
-            elif "master_live_stream_port" in s[u'keyname'] or "master_live_stream_mp" in s[u'keyname'] or "dj_live_stream_port" in s[u'keyname'] or "dj_live_stream_mp" in s[u'keyname'] or "off_air_meta" in s[u'keyname']:
-                if (existing[s[u'keyname']] != s[u'value']):
-                    self.logger.info("'Need-to-restart' state detected for %s...", s[u'keyname'])
-                    restart = True;
-            else:
-                stream, dump = s[u'keyname'].split('_', 1)
-                if "_output" in s[u'keyname']:
-                    if (existing[s[u'keyname']] != s[u'value']):
-                        self.logger.info("'Need-to-restart' state detected for %s...", s[u'keyname'])
-                        restart = True;
-                        state_change_restart[stream] = True
-                    elif (s[u'value'] != 'disabled'):
-                        state_change_restart[stream] = True
-                    else:
-                        state_change_restart[stream] = False
-                else:
-                    # setting inital value
-                    if stream not in change:
-                        change[stream] = False
-                    if not (s[u'value'] == existing[s[u'keyname']]):
-                        self.logger.info("Keyname: %s, Current value: %s, New Value: %s", s[u'keyname'], existing[s[u'keyname']], s[u'value'])
-                        change[stream] = True
-
-        # set flag change for sound_device alway True
-        self.logger.info("Change:%s, State_Change:%s...", change, state_change_restart)
-
-        for k, v in state_change_restart.items():
-            if k == "sound_device" and v:
-                restart = True
-            elif v and change[k]:
-                self.logger.info("'Need-to-restart' state detected for %s...", k)
-                restart = True
-        # rewrite
-        if restart:
-            self.restart_liquidsoap()
-        else:
-            self.logger.info("No change detected in setting...")
-            self.update_liquidsoap_connection_status()
 
     @ls_timeout
     def update_liquidsoap_connection_status(self):
@@ -536,6 +447,12 @@ class PypoFetch(Thread):
 
         return success
 
+    # This function makes a request to Airtime to see if we need to
+    # push metadata to TuneIn. We have to do this because TuneIn turns
+    # off metadata if it does not receive a request every 5 minutes.
+    def update_metadata_on_tunein(self):
+        self.api_client.update_metadata_on_tunein()
+        Timer(120, self.update_metadata_on_tunein).start()
 
     def main(self):
         #Make sure all Liquidsoap queues are empty. This is important in the
@@ -547,8 +464,10 @@ class PypoFetch(Thread):
 
         self.set_bootstrap_variables()
 
+        self.update_metadata_on_tunein()
+
         # Bootstrap: since we are just starting up, we need to grab the
-        # most recent schedule.  After that we fetch the schedule every 30
+        # most recent schedule.  After that we fetch the schedule every 8
         # minutes or wait for schedule updates to get pushed.
         success = self.persistent_manual_schedule_fetch(max_attempts=5)
 
@@ -558,6 +477,7 @@ class PypoFetch(Thread):
         loops = 1
         while True:
             self.logger.info("Loop #%s", loops)
+            manual_fetch_needed = False
             try:
                 """
                 our simple_queue.get() requires a timeout, in which case we
@@ -573,14 +493,23 @@ class PypoFetch(Thread):
                 Currently we are checking every POLL_INTERVAL seconds
                 """
 
-
                 message = self.fetch_queue.get(block=True, timeout=self.listener_timeout)
+                manual_fetch_needed = False
                 self.handle_message(message)
-            except Empty, e:
+            except Empty as e:
                 self.logger.info("Queue timeout. Fetching schedule manually")
-                self.persistent_manual_schedule_fetch(max_attempts=5)
-            except Exception, e:
+                manual_fetch_needed = True
+            except Exception as e:
                 top = traceback.format_exc()
+                self.logger.error('Exception: %s', e)
+                self.logger.error("traceback: %s", top)
+
+            try:
+                if manual_fetch_needed:
+                    self.persistent_manual_schedule_fetch(max_attempts=5)
+            except Exception as e:
+                top = traceback.format_exc()
+                self.logger.error('Failed to manually fetch the schedule.')
                 self.logger.error('Exception: %s', e)
                 self.logger.error("traceback: %s", top)
 
@@ -591,3 +520,4 @@ class PypoFetch(Thread):
         Entry point of the thread
         """
         self.main()
+        self.logger.info('PypoFetch thread exiting')

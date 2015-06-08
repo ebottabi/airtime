@@ -37,8 +37,6 @@ class Application_Model_Preference
             if ($isUserValue && is_null($userId))
                 throw new Exception("User id can't be null for a user preference {$key}.");
             
-            Application_Common_Database::prepareAndExecute("LOCK TABLE cc_pref");
-
             //Check if key already exists
             $sql = "SELECT COUNT(*) FROM cc_pref"
                 ." WHERE keystr = :key";
@@ -1442,5 +1440,67 @@ class Application_Model_Preference
         }
 
         self::setDiskUsage($currentDiskUsage + $filesize);
+    }
+
+
+    public static function setProvisioningStatus($status)
+    {
+        //See constants.php for the list of valid values. eg. PROVISIONING_STATUS_ACTIVE
+        self::setValue("provisioning_status", $status);
+    }
+
+    public static function getProvisioningStatus()
+    {
+        return self::getValue("provisioning_status");
+    }
+
+    public static function setTuneinEnabled($value)
+    {
+        self::setValue("tunein_enabled", $value);
+    }
+
+    public static function getTuneinEnabled()
+    {
+        return self::getValue("tunein_enabled");
+    }
+
+    public static function setTuneinPartnerKey($value)
+    {
+        self::setValue("tunein_partner_key", $value);
+    }
+
+    public static function getTuneinPartnerKey()
+    {
+        return self::getValue("tunein_partner_key");
+    }
+
+    public static function setTuneinPartnerId($value)
+    {
+        self::setValue("tunein_partner_id", $value);
+    }
+
+    public static function getTuneinPartnerId()
+    {
+        return self::getValue("tunein_partner_id");
+    }
+
+    public static function setTuneinStationId($value)
+    {
+        self::setValue("tunein_station_id", $value);
+    }
+
+    public static function getTuneinStationId()
+    {
+        return self::getValue("tunein_station_id");
+    }
+
+    public static function geLastTuneinMetadataUpdate()
+    {
+        return self::getValue("last_tunein_metadata_update");
+    }
+
+    public static function setLastTuneinMetadataUpdate($value)
+    {
+        self::setValue("last_tunein_metadata_update", $value);
     }
 }

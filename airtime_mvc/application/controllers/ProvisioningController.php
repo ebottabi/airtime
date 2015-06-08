@@ -32,11 +32,14 @@ class ProvisioningController extends Zend_Controller_Action
 
         try {
             // This is hacky and should be genericized
-            if ($_POST['station_name']) {
+            if (isset($_POST['station_name'])) {
                 Application_Model_Preference::SetStationName($_POST['station_name']);
             }
-            if ($_POST['description']) {
+            if (isset($_POST['description'])) {
                 Application_Model_Preference::SetStationDescription($_POST['description']);
+            }
+            if (isset($_POST['provisioning_status'])) {
+                Application_Model_Preference::setProvisioningStatus($_POST['provisioning_status']);
             }
         } catch (Exception $e) {
             $this->getResponse()
@@ -54,13 +57,16 @@ class ProvisioningController extends Zend_Controller_Action
 
     /**
      * Delete the Airtime Pro station's files from Amazon S3
+     *
+     * FIXME: When we deploy this next time, we should ensure that
+     *        this function can only be accessed with POST requests!
      */
     public function terminateAction()
     {
         $this->view->layout()->disableLayout();
         $this->_helper->viewRenderer->setNoRender(true);
 
-        if (!RestAuth::verifyAuth(true, true, $this)) {
+        if (!RestAuth::verifyAuth(true, false, $this)) {
             return;
         }
         
