@@ -75,8 +75,13 @@ class Application_Model_StreamSetting
             $host = $streamData[$prefix."host"];
             $port = $streamData[$prefix."port"];
             $mount = $streamData[$prefix."mount"];
+            if ($streamData[$prefix."output"] == "shoutcast") {
+                $url = "http://$host:$port/;"; //The semi-colon is important to make Shoutcast stream URLs play instead turn into a page.
+            } else { //Icecast
+                $url = "http://$host:$port/$mount";
+            }
             $streams[$id] = Array(
-                "url" => "http://$host:$port/$mount",
+                "url" => $url,
                 "codec" => $streamData[$prefix."type"],
                 "bitrate" => $streamData[$prefix."bitrate"],
                 "mobile" => $streamData[$prefix."mobile"]
@@ -274,7 +279,7 @@ class Application_Model_StreamSetting
             $sql = "UPDATE cc_stream_setting SET value=:v WHERE keyname=:keyname";
             $map = array(":v" => $v, ":keyname"=>$keyname);
 
-            $res = Application_Common_Database::prepareAndExecute($sql, $map, 
+            $res = Application_Common_Database::prepareAndExecute($sql, $map,
                 Application_Common_Database::EXECUTE);
         }
     }

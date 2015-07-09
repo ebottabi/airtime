@@ -1,8 +1,13 @@
 <?php
+require_once('WidgetHelper.php');
 require_once('TuneIn.php');
 
 class ApiController extends Zend_Controller_Action
 {
+
+    const DEFAULT_SHOWS_TO_RETRIEVE = "5";
+
+    const DEFAULT_DAYS_TO_RETRIEVE = "2";
 
     public function init()
     {
@@ -165,14 +170,14 @@ class ApiController extends Zend_Controller_Action
     
             $request = $this->getRequest();
     
-            $utcTimeNow = gmdate("Y-m-d H:i:s");
+            $utcTimeNow = gmdate(DEFAULT_TIMESTAMP_FORMAT);
             $utcTimeEnd = "";   // if empty, getNextShows will use interval instead of end of day
     
             // default to the station timezone
             $timezone = Application_Model_Preference::GetDefaultTimezone();
             $userDefinedTimezone = strtolower($request->getParam('timezone'));
             $upcase = false; // only upcase the timezone abbreviations
-            $this->checkTimezone($userDefinedTimezone, $timezone, $upcase);
+            $this->updateTimezone($userDefinedTimezone, $timezone, $upcase);
     
             $type = $request->getParam('type');
             $limit = $request->getParam('limit');
@@ -187,7 +192,7 @@ class ApiController extends Zend_Controller_Action
                 // make getNextShows use end of day
                 $end = Application_Common_DateHelper::getTodayStationEndDateTime();
                 $end->setTimezone(new DateTimeZone("UTC"));
-                $utcTimeEnd = $end->format("Y-m-d H:i:s");
+                $utcTimeEnd = $end->format(DEFAULT_TIMESTAMP_FORMAT);
                 
                 $result = array(
                     "env" => APPLICATION_ENV,
@@ -198,9 +203,7 @@ class ApiController extends Zend_Controller_Action
             } else {
                 $result = Application_Model_Schedule::GetPlayOrderRangeOld($limit);
             }
-    
-            // XSS exploit prevention
-            $this->convertSpecialChars($result, array("name", "url"));
+
             // apply user-defined timezone, or default to station
             Application_Common_DateHelper::convertTimestampsToTimezone(
                 $result['currentShow'],
@@ -217,8 +220,12 @@ class ApiController extends Zend_Controller_Action
             $result["schedulerTime"] = Application_Common_DateHelper::UTCStringToTimezoneString($result["schedulerTime"], $timezone);
             $result["timezone"] = $upcase ? strtoupper($timezone) : $timezone;
             $result["timezoneOffset"] = Application_Common_DateHelper::getTimezoneOffset($timezone);
+
+            // XSS exploit prevention
+            SecurityHelper::htmlescape_recursive($result);
+
             // convert image paths to point to api endpoints
-            $this->findAndConvertPaths($result);
+            WidgetHelper::findAndConvertPaths($result);
     
             // used by caller to determine if the airtime they are running or widgets in use is out of date.
             $result['AIRTIME_API_VERSION'] = AIRTIME_API_VERSION;
@@ -260,22 +267,19 @@ class ApiController extends Zend_Controller_Action
 
             $request = $this->getRequest();
             
-            $utcTimeNow = gmdate("Y-m-d H:i:s");
-            $utcTimeEnd = "";   // if empty, getNextShows will use interval instead of end of day
-
             // default to the station timezone
             $timezone = Application_Model_Preference::GetDefaultTimezone();
             $userDefinedTimezone = strtolower($request->getParam('timezone'));
             $upcase = false; // only upcase the timezone abbreviations
-            $this->checkTimezone($userDefinedTimezone, $timezone, $upcase);
+            $this->updateTimezone($userDefinedTimezone, $timezone, $upcase);
             
             $daysToRetrieve = $request->getParam('days');
             $showsToRetrieve = $request->getParam('shows');
             if ($daysToRetrieve == "" || !is_numeric($daysToRetrieve)) {
-                $daysToRetrieve = "2";
+                $daysToRetrieve = self::DEFAULT_DAYS_TO_RETRIEVE;
             }
             if ($showsToRetrieve == "" || !is_numeric($showsToRetrieve)) {
-                $showsToRetrieve = "5";
+                $showsToRetrieve = self::DEFAULT_SHOWS_TO_RETRIEVE;
             }
             
             // set the end time to the day's start n days from now.
@@ -283,16 +287,18 @@ class ApiController extends Zend_Controller_Action
             // days=2 will return shows until the end of tomorrow, etc.
             $end = Application_Common_DateHelper::getEndDateTime($timezone, $daysToRetrieve);
             $end->setTimezone(new DateTimeZone("UTC"));
-            $utcTimeEnd = $end->format("Y-m-d H:i:s");
+            $utcTimeEnd = $end->format(DEFAULT_TIMESTAMP_FORMAT);
 
             $result = Application_Model_Schedule::GetPlayOrderRange($utcTimeEnd, $showsToRetrieve);
             
-            // XSS exploit prevention
-            $this->convertSpecialChars($result, array("name", "url"));
             // apply user-defined timezone, or default to station
             $this->applyLiveTimezoneAdjustments($result, $timezone, $upcase);
+
+            // XSS exploit prevention
+            SecurityHelper::htmlescape_recursive($result);
+
             // convert image paths to point to api endpoints
-            $this->findAndConvertPaths($result);
+            WidgetHelper::findAndConvertPaths($result);
             
             // used by caller to determine if the airtime they are running or widgets in use is out of date.
             $result["station"]["AIRTIME_API_VERSION"] = AIRTIME_API_VERSION;
@@ -321,7 +327,7 @@ class ApiController extends Zend_Controller_Action
      * @param string    $timezone               the default timezone
      * @param boolean   $upcase                 whether the timezone output should be upcased
      */
-    private function checkTimezone($userDefinedTimezone, &$timezone, &$upcase) 
+    private function updateTimezone($userDefinedTimezone, &$timezone, &$upcase)
     {
         $delimiter = "/";
         // if the user passes in a timezone in standard form ("Continent/City")
@@ -342,8 +348,8 @@ class ApiController extends Zend_Controller_Action
      * If the user passed in a timezone parameter, adjust timezone-dependent 
      * variables in the result to reflect the given timezone.
      * 
-     * @param object    $result     reference to the object to send back to the user
-     * @param string    $timezone    the user's timezone parameter value
+     * @param array     $result     reference to the object to send back to the user
+     * @param string    $timezone   the user's timezone parameter value
      * @param boolean   $upcase     whether the timezone output should be upcased
      */
     private function applyLiveTimezoneAdjustments(&$result, $timezone, $upcase) 
@@ -354,9 +360,9 @@ class ApiController extends Zend_Controller_Action
             $timezone
         );
         
-           //Convert the UTC scheduler time ("now") to the user-defined timezone.
-           $result["station"]["schedulerTime"] = Application_Common_DateHelper::UTCStringToTimezoneString($result["station"]["schedulerTime"], $timezone);
-           $result["station"]["timezone"] = $upcase ? strtoupper($timezone) : $timezone;
+        //Convert the UTC scheduler time ("now") to the user-defined timezone.
+        $result["station"]["schedulerTime"] = Application_Common_DateHelper::UTCStringToTimezoneString($result["station"]["schedulerTime"], $timezone);
+        $result["station"]["timezone"] = $upcase ? strtoupper($timezone) : $timezone;
     }
     
     public function weekInfoAction()
@@ -366,55 +372,11 @@ class ApiController extends Zend_Controller_Action
             $this->view->layout()->disableLayout();
             $this->_helper->viewRenderer->setNoRender(true);
 
-            //weekStart is in station time.
-            $weekStartDateTime = Application_Common_DateHelper::getWeekStartDateTime();
-            
-            $dow = array("monday", "tuesday", "wednesday", "thursday", "friday",
-                        "saturday", "sunday", "nextmonday", "nexttuesday", "nextwednesday",
-                        "nextthursday", "nextfriday", "nextsaturday", "nextsunday");
+            $result = WidgetHelper::getWeekInfo($this->getRequest()->getParam("timezone"));
 
-            $result = array();
-            
-            // default to the station timezone
-            $timezone = Application_Model_Preference::GetDefaultTimezone();
-            $userDefinedTimezone = strtolower($this->getRequest()->getParam("timezone"));
-            // if the timezone defined by the user exists, use that
-            if (array_key_exists($userDefinedTimezone, timezone_abbreviations_list())) {
-                $timezone = $userDefinedTimezone;
-            }            
-            $utcTimezone = new DateTimeZone("UTC");
-            
-            $weekStartDateTime->setTimezone($utcTimezone);
-            $utcDayStart = $weekStartDateTime->format("Y-m-d H:i:s");
-            for ($i = 0; $i < 14; $i++) {
-                //have to be in station timezone when adding 1 day for daylight savings.
-                $weekStartDateTime->setTimezone(new DateTimeZone($timezone));
-                $weekStartDateTime->add(new DateInterval('P1D'));
-                
-                //convert back to UTC to get the actual timestamp used for search.
-                $weekStartDateTime->setTimezone($utcTimezone);
-                
-                $utcDayEnd = $weekStartDateTime->format("Y-m-d H:i:s");
-                $shows = Application_Model_Show::getNextShows($utcDayStart, "ALL", $utcDayEnd);
-                $utcDayStart = $utcDayEnd;
-                
-                // convert to user-defined timezone, or default to station
-                Application_Common_DateHelper::convertTimestampsToTimezone(
-                    $shows,
-                    array("starts", "ends", "start_timestamp","end_timestamp"),
-                    $timezone
-                );
-
-                $result[$dow[$i]] = $shows;
-            }
-
-            // XSS exploit prevention
-            $this->convertSpecialChars($result, array("name", "url"));
-            // convert image paths to point to api endpoints
-            $this->findAndConvertPaths($result);
-            
             //used by caller to determine if the airtime they are running or widgets in use is out of date.
             $result['AIRTIME_API_VERSION'] = AIRTIME_API_VERSION;
+
             header("Content-type: text/javascript");
             
             if (version_compare(phpversion(), '5.4.0', '<')) {
@@ -428,50 +390,6 @@ class ApiController extends Zend_Controller_Action
             header('HTTP/1.0 401 Unauthorized');
             print _('You are not allowed to access this resource. ');
             exit;
-        }
-    }
-    
-    /**
-     * Go through a given array and sanitize any potentially exploitable fields
-     * by passing them through htmlspecialchars
-     *
-     * @param array $arr     the array to sanitize
-     * @param array $keys    indexes of values to be sanitized
-     */
-    private function convertSpecialChars(&$arr, $keys) 
-    {
-        foreach ($arr as &$a) {
-            if (is_array($a)) {
-                foreach ($keys as &$key) {
-                    if (array_key_exists($key, $a)) {
-                        $a[$key] = htmlspecialchars($a[$key]);
-                    }
-                }
-                $this->convertSpecialChars($a, $keys);
-            }
-        }
-    }
-    
-    /**
-     * Recursively find image_path keys in the various $result subarrays,
-     * and convert them to point to the show-logo endpoint
-     *
-     * @param array $arr the array to search
-     */
-    private function findAndConvertPaths(&$arr) 
-    {
-        $CC_CONFIG = Config::getConfig();
-        $baseDir = Application_Common_OsPath::formatDirectoryWithDirectorySeparators($CC_CONFIG['baseDir']);
-        
-        foreach ($arr as &$a) {
-            if (is_array($a)) {
-                if (array_key_exists("image_path", $a)) {
-                    $a["image_path"] = $a["image_path"] && $a["image_path"] !== '' ?
-                        "http://".$_SERVER['HTTP_HOST'].$baseDir."api/show-logo?id=".$a["id"] : '';
-                } else {
-                    $this->findAndConvertPaths($a);
-                }
-            }
         }
     }
     
@@ -730,11 +648,6 @@ class ApiController extends Zend_Controller_Action
         // fields
         $file->setMetadataValue('MDATA_KEY_CREATOR', "Airtime Show Recorder");
         $file->setMetadataValue('MDATA_KEY_TRACKNUMBER', $show_instance_id);
-
-        if (!$showCanceled && Application_Model_Preference::GetAutoUploadRecordedShowToSoundcloud()) {
-            $id = $file->getId();
-            Application_Model_Soundcloud::uploadSoundcloud($id);
-        }
     }
 
     public function mediaMonitorSetupAction()

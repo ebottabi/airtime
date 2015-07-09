@@ -1,5 +1,5 @@
 -- Schema version
-INSERT INTO cc_pref("keystr", "valstr") VALUES('system_version', '2.5.9');
+INSERT INTO cc_pref("keystr", "valstr") VALUES('schema_version', '2.5.12');
 
 INSERT INTO cc_subjs ("login", "type", "pass") VALUES ('admin', 'A', md5('admin'));
 -- added in 2.3
@@ -376,3 +376,11 @@ INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_descripti
 INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_genre', '', 'string');
 INSERT INTO cc_stream_setting (keyname, value, type) VALUES ('s4_channels', 'stereo', 'string');
 
+-- added in 2.5.14 - this can't be set up in Propel's XML schema, so we need to do it here -- Duncan
+
+ALTER TABLE cc_pref ALTER COLUMN subjid SET NULL;
+ALTER TABLE cc_pref ALTER COLUMN subjid SET DEFAULT NULL;
+CREATE UNIQUE INDEX cc_pref_key_idx ON cc_pref (keystr) WHERE subjid IS NULL;
+ANALYZE cc_pref; -- this validates the new partial index
+
+--end added in 2.5.14
