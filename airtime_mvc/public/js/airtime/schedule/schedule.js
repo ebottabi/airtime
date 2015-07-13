@@ -307,6 +307,7 @@ function createFullCalendar(data){
         eventDrop: eventDrop,
         eventResize: eventResize,
         windowResize: windowResize,
+        eventClick: eventClick
         /*
         selectable: true,
         selectHelper: true,
@@ -325,10 +326,10 @@ function alertShowErrorAndReload(){
 
 $(document).ready(function() {
     checkCalendarSCUploadStatus();
-    
+
     $.contextMenu({
         selector: 'div.fc-event',
-        trigger: "left",
+        trigger: "custom",
         ignoreRightClick: true,
         
         build: function($el, e) {

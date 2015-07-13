@@ -137,10 +137,12 @@ function dayClick(date, allDay, jsEvent, view){
                 editable: true,
                 overlap: false,
                 allDay: false,
+                className: ['event-placeholder']
             };
 
             $('#schedule_calendar').fullCalendar('renderEvent', newEvent, false);
 
+            selectCalendarEvents([newEvent]);
 
             openAddShowForm();
         }
@@ -159,6 +161,13 @@ function setShowFormTimes(startMoment, endMoment)
     $("#add_show_end_date").val(endDateString);
     $("#add_show_start_time").val(startTimeString)
     $("#add_show_end_time").val(endTimeString)
+}
+
+function eventClick(event, jsEvent, view) {
+    selectCalendarEvents([event]);
+
+    //Crappy context-menu hack:
+    //$('.event-selected').contextMenu();
 }
 
 function viewDisplay( view ) {
@@ -610,6 +619,30 @@ function alertShowErrorAndReload(){
   alert($.i18n._("The show instance doesn't exist anymore!"));
   window.location.reload();
 }
+
+var selectedCalendarEvents = [];
+function selectCalendarEvents(events)
+{
+    //Remove selection outline from any previously selected events
+    jQuery.each(selectedCalendarEvents, function(i, event) {
+        event["className"].splice(event["className"].indexOf("event-selected"),1);
+    });
+    selectedCalendarEvents = events;
+
+    //Add a special class to outline each selected event and re-render them.
+    jQuery.each(selectedCalendarEvents, function(i, event) {
+        if (event["className"] != undefined) {
+            event["className"].push("event-selected");
+        } else {
+            event["className"] = ["event-selected"];
+        }
+        console.log(event.className);
+
+    });
+
+    $("#schedule_calendar").fullCalendar('rerenderEvents');
+}
+
 
 $(document).ready(function(){
     preloadEventFeed();

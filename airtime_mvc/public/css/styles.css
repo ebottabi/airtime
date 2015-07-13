@@ -1518,6 +1518,14 @@ h2#scheduled_playlist_name span {
     max-height:560px;
 }
 
+.event-placeholder {
+    opacity: 0.5;
+}
+
+.event-selected {
+    border: 1px solid #fff !important;
+}
+
 #schedule_calendar .ui-progressbar {
     width: 46%;
     height: 5px;
