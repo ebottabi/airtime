@@ -4,6 +4,8 @@
 *
 */
 
+var PLACEHOLDER_EVENT_ID = 998989;
+
 function scheduleRefetchEvents(json) {
     if(json.show_error == true){
         alert($.i18n._("The show instance doesn't exist anymore!"));
@@ -48,6 +50,8 @@ function dayClick(date, allDay, jsEvent, view){
             today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
             selected = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes());
         }
+        
+        $('#schedule_calendar').fullCalendar('removeEvents', PLACEHOLDER_EVENT_ID); //Removes any previous placeholder events because they all share the same ID
 
         //Albert hack:
         if(view.name === "month")
@@ -109,35 +113,52 @@ function dayClick(date, allDay, jsEvent, view){
                 // so we don't ahve to calculate it explicitly
                 //startTime_string = pad(selected.getHours(),2)+":"+pad(selected.getMinutes(),2);
                 startTime = selected;
-                startTime_string = moment(startTime).format("HH:mm");
+                startTimeString = moment(startTime).format("HH:mm");
             }
 
-            // calculate endDateTime
-            //var endDateTime = new Date(startTime + duration);
-            var endDateTime = moment(startTime).add(1, 'hours');
+            var startMoment = moment(startTime);
 
-            chosenDate = selected.getFullYear() + '-' + pad(selected.getMonth()+1,2) + '-' + pad(selected.getDate(),2);
-            //var endDateFormat = endDateTime.getFullYear() + '-' + pad(endDateTime.getMonth()+1,2) + '-' + pad(endDateTime.getDate(),2);
-            var endDateFormat = endDateTime.format('YYYY-MM-DD');
-            var endTimeString = endDateTime.format("HH:mm");
+            // calculate endMoment
+            //var endMoment = new Date(startTime + duration);
+            var endMoment = startMoment.clone().add(1, 'hours');
 
-            $("#add_show_start_date").val(chosenDate);
-            $("#add_show_end_date_no_repeat").val(endDateFormat);
-            $("#add_show_end_date").val(endDateFormat);
-            //if(view.name !== "month") {
-                //var endTimeString =  //pad(endDateTime.getHours(),2)+":"+pad(endDateTime.getMinutes(),2);
-                $("#add_show_start_time").val(startTime_string)
-                $("#add_show_end_time").val(endTimeString)
-            //}
+            setShowFormTimes(startMoment, endMoment);
             $("#schedule-show-when").show();
 
-            console.log(startTime, endDateTime);
-            $('#schedule_calendar').fullCalendar('select', startTime, endDateTime);
+            console.log(startMoment.toDate())
+            console.log(endMoment.toDate());
+            //$('#schedule_calendar').fullCalendar('select', startTime, endMoment.toString());
+
+            var newEvent = {
+                id: PLACEHOLDER_EVENT_ID,
+                title: $.i18n._("Untitled Show"),
+                start: startTime, //new Date(y, m, d)
+                end: endMoment.toDate(), //new Date(y, m, d)
+                editable: true,
+                overlap: false,
+                allDay: false,
+            };
+
+            $('#schedule_calendar').fullCalendar('renderEvent', newEvent, false);
+
 
             openAddShowForm();
         }
         return false; //Prevents text highlighting
     }
+}
+
+function setShowFormTimes(startMoment, endMoment)
+{
+    var startDateString = startMoment.format('YYYY-MM-DD');
+    var startTimeString = startMoment.format("HH:mm");
+    var endDateString = endMoment.format('YYYY-MM-DD');
+    var endTimeString = endMoment.format("HH:mm");
+    $("#add_show_start_date").val(startDateString);
+    $("#add_show_end_date_no_repeat").val(endDateString);
+    $("#add_show_end_date").val(endDateString);
+    $("#add_show_start_time").val(startTimeString)
+    $("#add_show_end_time").val(endTimeString)
 }
 
 function viewDisplay( view ) {
@@ -315,6 +336,13 @@ function eventAfterRender( event, element, view ) {
 
 function eventDrop(event, dayDelta, minuteDelta, allDay, revertFunc, jsEvent, ui, view) {
     var url = baseUrl+'Schedule/move-show/format/json';
+    
+    if (event.id == PLACEHOLDER_EVENT_ID) {
+        console.log('placeholder dropped')
+        setShowFormTimes(moment(event.start), moment(event.end));
+        return;
+    }
+
 
     $.post(url,
         {day: dayDelta, min: minuteDelta, showInstanceId: event.id},
@@ -336,6 +364,13 @@ function eventDrop(event, dayDelta, minuteDelta, allDay, revertFunc, jsEvent, ui
 }
 
 function eventResize( event, dayDelta, minuteDelta, revertFunc, jsEvent, ui, view ) {
+
+    if (event.id == PLACEHOLDER_EVENT_ID) {
+        console.log('placeholder resized')
+        setShowFormTimes(moment(event.start), moment(event.end));
+        return;
+    }
+
     var url = baseUrl+'Schedule/resize-show/format/json';
 
     $.post(url,

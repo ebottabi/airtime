@@ -307,11 +307,12 @@ function createFullCalendar(data){
         eventDrop: eventDrop,
         eventResize: eventResize,
         windowResize: windowResize,
+        /*
         selectable: true,
         selectHelper: true,
         selectOverlap: function(event) {
             return false;
-        }
+        }*/
     });
 }
 

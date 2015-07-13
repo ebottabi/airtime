@@ -251,6 +251,7 @@ class LocaleController extends Zend_Controller_Action
             "Thu" => _("Thu"),
             "Fri" => _("Fri"),
             "Sat" => _("Sat"),
+            "Untitled Show" => _("Untitled Show"),
             "Shows longer than their scheduled time will be cut off by a following show." => _("Shows longer than their scheduled time will be cut off by a following show."),
             "Cancel Current Show?" => _("Cancel Current Show?"),
             "Stop recording current show?" => _("Stop recording current show?"),
