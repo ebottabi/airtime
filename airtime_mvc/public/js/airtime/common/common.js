@@ -1,3 +1,6 @@
+var previewWidth = 482,
+    previewHeight = 110;
+
 $(document).ready(function() {
 
     /* Removed as this is now (hopefully) unnecessary */
@@ -142,9 +145,10 @@ function open_show_preview(p_showID, p_showIndex) {
     _preview_window.focus();
 }
 
-function openPreviewWindow(url) {
+function openPreviewWindow(url, w, h) {
+    var dim = (w && h) ? 'width=' + w + ',height=' + h + ',' : '';
     // Hardcoding this here is kinda gross, but the alternatives aren't much better...
-    _preview_window = window.open(url, $.i18n._('Audio Player'), 'width=482,height=110,scrollbars=yes');
+    _preview_window = window.open(url, $.i18n._('Audio Player'), dim + 'scrollbars=yes');
     return false;
 }
 
@@ -156,4 +160,29 @@ function removeSuccessMsg() {
     var $status = $('.success');
     
     $status.fadeOut("slow", function(){$status.empty()});
+}
+
+function getUsabilityHint() {
+    var pathname = window.location.pathname;
+    $.getJSON("/api/get-usability-hint", {"format": "json", "userPath": pathname}, function(json) {
+        var $hint_div = $('.usability_hint');
+        var current_hint = $hint_div.html();
+        if (json === "") {
+            // there are no more hints to display to the user
+            $hint_div.hide();
+        } else if (current_hint !== json) {
+            // we only change the message if it is new
+            if ($hint_div.is(":visible")) {
+                $hint_div.hide();
+            }
+            $hint_div.html(json);
+            $hint_div.show("slow");
+
+        } else {
+            // hint is the same before we hid it so we just need to show it
+            if ($hint_div.is(":hidden")) {
+                $hint_div.show();
+            }
+        }
+    });
 }

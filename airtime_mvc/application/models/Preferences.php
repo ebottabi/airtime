@@ -26,17 +26,18 @@ class Application_Model_Preferences
     private static function setValue($key, $value, $isUserValue = false)
     {
         $cache = new Cache();
-        
-        try {
-            
-            $con = Propel::getConnection(CcPrefPeer::DATABASE_NAME);
-            $con->beginTransaction();
+        $con = Propel::getConnection(CcPrefPeer::DATABASE_NAME);
+        $con->beginTransaction();
 
+        try {
+            /* Comment this out while we reevaluate it in favor of a unique constraint
+            static::_lock($con); */
             $userId = self::getUserId();
             
-            if ($isUserValue && is_null($userId))
+            if ($isUserValue && is_null($userId)) {
                 throw new Exception("User id can't be null for a user preference {$key}.");
-            
+            }
+
             //Check if key already exists
             $sql = "SELECT COUNT(*) FROM cc_pref"
                 ." WHERE keystr = :key";
@@ -112,6 +113,28 @@ class Application_Model_Preferences
         $cache->store($key, $value, $isUserValue, $userId);
     }
 
+    /**
+     * Given a PDO connection, lock the cc_pref table for the current transaction
+     *
+     * Creates a table level lock, which defaults to ACCESS EXCLUSIVE mode;
+     * see http://www.postgresql.org/docs/9.1/static/explicit-locking.html
+     *
+     * @param PDO $con
+     */
+    private static function _lock($con) {
+        // If we're not in a transaction, a lock is pointless
+        if (!$con->inTransaction()) {
+            return;
+        }
+        // Don't specify NOWAIT here; we should block on obtaining this lock
+        // in case we're handling simultaneous requests.
+        // Locks only last until the end of the transaction, so we shouldn't have to
+        // worry about this causing any noticeable difference in request processing speed
+        $sql = "LOCK TABLE cc_pref";
+        $st = $con->prepare($sql);
+        $st->execute();
+    }
+
     private static function getValue($key, $isUserValue = false)
     {
         $cache = new Cache();
@@ -139,9 +162,9 @@ class Application_Model_Preferences
                 $sql .= " AND subjid = :id";
                 $paramMap[':id'] = $userId;
             }
-            
+
             $result = Application_Common_Database::prepareAndExecute($sql, $paramMap, Application_Common_Database::COLUMN);
-            
+
             //return an empty string if the result doesn't exist.
             if ($result == 0) {
                 $res = "";
@@ -327,77 +350,6 @@ class Application_Model_Preferences
     public static function SetStationName($station_name)
     {
         self::setValue("station_name", $station_name);
-    }
-
-    public static function SetAutoUploadRecordedShowToSoundcloud($upload)
-    {
-        self::setValue("soundcloud_auto_upload_recorded_show", $upload);
-    }
-
-    public static function GetAutoUploadRecordedShowToSoundcloud()
-    {
-        return self::getValue("soundcloud_auto_upload_recorded_show");
-    }
-
-    public static function SetSoundCloudUser($user)
-    {
-        self::setValue("soundcloud_user", $user);
-    }
-
-    public static function GetSoundCloudUser()
-    {
-        return self::getValue("soundcloud_user");
-    }
-
-    public static function SetSoundCloudPassword($password)
-    {
-        if (strlen($password) > 0)
-            self::setValue("soundcloud_password", $password);
-    }
-
-    public static function GetSoundCloudPassword()
-    {
-        return self::getValue("soundcloud_password");
-    }
-
-    public static function SetSoundCloudTags($tags)
-    {
-        self::setValue("soundcloud_tags", $tags);
-    }
-
-    public static function GetSoundCloudTags()
-    {
-        return self::getValue("soundcloud_tags");
-    }
-
-    public static function SetSoundCloudGenre($genre)
-    {
-        self::setValue("soundcloud_genre", $genre);
-    }
-
-    public static function GetSoundCloudGenre()
-    {
-        return self::getValue("soundcloud_genre");
-    }
-
-    public static function SetSoundCloudTrackType($track_type)
-    {
-        self::setValue("soundcloud_tracktype", $track_type);
-    }
-
-    public static function GetSoundCloudTrackType()
-    {
-        return self::getValue("soundcloud_tracktype");
-    }
-
-    public static function SetSoundCloudLicense($license)
-    {
-        self::setValue("soundcloud_license", $license);
-    }
-
-    public static function GetSoundCloudLicense()
-    {
-        return self::getValue("soundcloud_license");
     }
 
     public static function SetAllow3rdPartyApi($bool)
@@ -672,12 +624,6 @@ class Application_Model_Preferences
 
         $outputArray['LIVE_DURATION'] = Application_Model_LiveLog::GetLiveShowDuration($p_testing);
         $outputArray['SCHEDULED_DURATION'] = Application_Model_LiveLog::GetScheduledDuration($p_testing);
-        $outputArray['SOUNDCLOUD_ENABLED'] = self::GetUploadToSoundcloudOption();
-        if ($outputArray['SOUNDCLOUD_ENABLED']) {
-            $outputArray['NUM_SOUNDCLOUD_TRACKS_UPLOADED'] = Application_Model_StoredFile::getSoundCloudUploads();
-        } else {
-            $outputArray['NUM_SOUNDCLOUD_TRACKS_UPLOADED'] = NULL;
-        }
 
         $outputArray['STATION_NAME'] = self::GetStationName();
         $outputArray['PHONE'] = self::GetPhone();
@@ -722,12 +668,6 @@ class Application_Model_Preferences
                     foreach ($s_info as $k => $v) {
                         $outputString .= "\t".strtoupper($k)." : ".$v."\n";
                     }
-                }
-            } elseif ($key == "SOUNDCLOUD_ENABLED") {
-                if ($out) {
-                    $outputString .= $key." : TRUE\n";
-                } elseif (!$out) {
-                    $outputString .= $key." : FALSE\n";
                 }
             } elseif ($key == "SAAS") {
                 $outputString .= $key.' : '.$out."\n";
@@ -975,26 +915,6 @@ class Application_Model_Preferences
         }
     }
 
-    public static function SetUploadToSoundcloudOption($upload)
-    {
-        self::setValue("soundcloud_upload_option", $upload);
-    }
-
-    public static function GetUploadToSoundcloudOption()
-    {
-        return self::getValue("soundcloud_upload_option");
-    }
-
-    public static function SetSoundCloudDownloadbleOption($upload)
-    {
-        self::setValue("soundcloud_downloadable", $upload);
-    }
-
-    public static function GetSoundCloudDownloadbleOption()
-    {
-        return self::getValue("soundcloud_downloadable");
-    }
-
     public static function SetWeekStartDay($day)
     {
         self::setValue("week_start_day", $day);
@@ -1134,7 +1054,7 @@ class Application_Model_Preferences
     public static function GetDiskQuota()
     {
         $val = self::getValue("disk_quota");
-        return (strlen($val) == 0) ? 0 : $val;
+        return empty($val) ? 2147483648 : $val;  # If there is no value for disk quota, return 2GB
     }
 
     public static function SetLiveStreamMasterUsername($value)
@@ -1547,5 +1467,57 @@ class Application_Model_Preferences
     public static function setLastTuneinMetadataUpdate($value)
     {
         self::setValue("last_tunein_metadata_update", $value);
+    }
+
+    /* Third Party */
+
+    // SoundCloud
+
+    public static function getDefaultSoundCloudLicenseType() {
+        $val = self::getValue("soundcloud_license_type");
+        // If we don't have a value set, return all-rights-reserved by default
+        return empty($val) ? DEFAULT_SOUNDCLOUD_LICENSE_TYPE : $val;
+    }
+
+    public static function setDefaultSoundCloudLicenseType($value) {
+        self::setValue("soundcloud_license_type", $value);
+    }
+
+    public static function getDefaultSoundCloudSharingType() {
+        $val = self::getValue("soundcloud_sharing_type");
+        // If we don't have a value set, return public by default
+        return empty($val) ? DEFAULT_SOUNDCLOUD_SHARING_TYPE : $val;
+    }
+
+    public static function setDefaultSoundCloudSharingType($value) {
+        self::setValue("soundcloud_sharing_type", $value);
+    }
+
+    public static function getSoundCloudRequestToken() {
+        return self::getValue("soundcloud_request_token");
+    }
+
+    public static function setSoundCloudRequestToken($value) {
+        self::setValue("soundcloud_request_token", $value);
+    }
+
+    // TaskManager Lock Timestamp
+
+    public static function getTaskManagerLock() {
+        return self::getValue("task_manager_lock");
+    }
+
+    public static function setTaskManagerLock($value) {
+        self::setValue("task_manager_lock", $value);
+    }
+
+    public static function getRadioPageDisplayLoginButton()
+    {
+        return self::getValue("radio_page_display_login_button");
+    }
+
+    public static function setRadioPageDisplayLoginButton($value)
+    {
+        self::setValue("radio_page_display_login_button", $value);
     }
 }

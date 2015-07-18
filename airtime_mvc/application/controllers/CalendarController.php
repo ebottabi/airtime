@@ -98,6 +98,9 @@ class CalendarController extends Zend_Controller_Action
         $this->view->headScript()->appendFile($baseUrl.'js/datatables/plugin/dataTables.FixedColumns.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
         $this->view->headScript()->appendFile($baseUrl.'js/datatables/plugin/dataTables.columnFilter.js?'.$CC_CONFIG['airtime_version'], 'text/javascript');
 
+        $this->view->headScript()->appendFile($baseUrl.'js/libs/moment.min.js?'.$CC_CONFIG['airtime_version'], 'text/javascript');
+        $this->view->headScript()->appendFile($baseUrl.'js/libs/moment-timezone-with-data-2010-2020.min.js?'.$CC_CONFIG['airtime_version'], 'text/javascript');
+
         $this->view->headScript()->appendFile($baseUrl.'js/airtime/buttons/buttons.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
         $this->view->headScript()->appendFile($baseUrl.'js/airtime/library/events/library_showbuilder.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
         $this->view->headScript()->appendFile($baseUrl.'js/airtime/library/library.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
@@ -251,25 +254,6 @@ class CalendarController extends Zend_Controller_Action
             $this->view->show_error = true;
         }
         $this->view->show_id = $showId;
-    }
-
-    public function uploadToSoundCloudAction()
-    {
-        $show_instance = $this->_getParam('id');
-        
-        try {
-            $show_inst = new Application_Model_ShowInstance($show_instance);
-        } catch (Exception $e) {
-            $this->view->show_error = true;
-
-            return false;
-        }
-
-        $file = $show_inst->getRecordedFile();
-        $id = $file->getId();
-        Application_Model_Soundcloud::uploadSoundcloud($id);
-        // we should die with ui info
-        $this->_helper->json->sendJson(null);
     }
 
     public function makeContextMenuAction()
@@ -603,7 +587,20 @@ class CalendarController extends Zend_Controller_Action
         $forms = $this->createShowFormAction();
         
         $this->view->addNewShow = true;
-        
+
+        if ($data['add_show_start_now'] == "now") {
+
+            //have to use the timezone the user has entered in the form to check past/present
+            $showTimezone = new DateTimeZone($data["add_show_timezone"]);
+            $nowDateTime = new DateTime("now", $showTimezone);
+            //$showStartDateTime = new DateTime($start_time, $showTimezone);
+            //$showEndDateTime = new DateTime($end_time, $showTimezone);
+
+            $data['add_show_start_time'] = $nowDateTime->format("H:i");
+            $data['add_show_start_date'] = $nowDateTime->format("Y-m-d");
+        }
+
+
         if ($service_showForm->validateShowForms($forms, $data)) {
         	// Get the show ID from the show service to pass as a parameter to the RESTful ShowImageController
         	$this->view->showId = $service_show->addUpdateShow($data);

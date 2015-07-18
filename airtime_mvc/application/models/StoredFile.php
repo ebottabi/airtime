@@ -17,6 +17,7 @@ class Application_Model_StoredFile
 {
     /**
      * @holds propel database object
+     * @var CcFiles
      */
     private $_file;
 
@@ -73,6 +74,9 @@ class Application_Model_StoredFile
         return $this->_file->getDbFtype();
     }
 
+    /**
+     * @return CcFiles
+     */
     public function getPropelOrm()
     {
         return $this->_file;
@@ -464,48 +468,6 @@ SQL;
         $this->_file->save();
     }
 
-
-    public function getRealFileExtension() {
-        $path = $this->_file->getDbFilepath();
-        $path_elements = explode('.', $path);
-        if (count($path_elements) < 2) {
-            return "";
-        } else {
-            return $path_elements[count($path_elements) - 1];
-        }
-    }
-
-    /**
-     * Return suitable extension.
-     *
-     * @return string
-     *         file extension without a dot
-     */
-    public function getFileExtension()
-    {
-        $possible_ext = $this->getRealFileExtension();
-        if ($possible_ext !== "") {
-            return $possible_ext;
-        }
-
-        // We fallback to guessing the extension from the mimetype if we
-        // cannot extract it from the file name
-
-        $mime = $this->_file->getDbMime();
-
-        if ($mime == "audio/ogg" || $mime == "application/ogg" || $mime == "audio/vorbis") {
-            return "ogg";
-        } elseif ($mime == "audio/mp3" || $mime == "audio/mpeg") {
-            return "mp3";
-        } elseif ($mime == "audio/x-flac") {
-            return "flac";
-        } elseif ($mime == "audio/mp4") {
-            return "mp4";
-        } else {
-            throw new Exception("Unknown $mime");
-        }
-    }
-
     /**
      * Get the absolute filepath
      *
@@ -565,7 +527,7 @@ SQL;
      */
     public function getRelativeFileUrl($baseUrl)
     {
-        return $baseUrl."api/get-media/file/".$this->getId().".".$this->getFileExtension();
+        return $baseUrl."api/get-media/file/".$this->getId();
     }
     
     public function getResourceId()
@@ -616,6 +578,13 @@ SQL;
 
     /* TODO: Callers of this function should use a Propel transaction. Start
      * by creating $con outside the function with beingTransaction() */
+    /**
+     * @param int $p_id
+     * @param \Doctrine\DBAL\Driver\PDOConnection $con
+     *
+     * @return Application_Model_StoredFile
+     * @throws Exception
+     */
     public static function RecallById($p_id=null, $con=null) {
         //TODO
         if (is_null($con)) {
@@ -898,10 +867,6 @@ SQL;
                 $formatter = new BitrateFormatter($row['bit_rate']);
                 $row['bit_rate'] = $formatter->format();
 
-                //soundcloud status
-                $file = Application_Model_StoredFile::RecallById($row['id']);
-                $row['soundcloud_id'] = $file->getSoundCloudId();
-
                 // for audio preview
                 $row['audioFile'] = $row['id'].".".pathinfo($row['filepath'], PATHINFO_EXTENSION);
 
@@ -1133,77 +1098,6 @@ SQL;
         return $rows;
     }
 
-    /* Gets number of tracks uploaded to
-     * Soundcloud in the last 24 hours
-     */
-    public static function getSoundCloudUploads()
-    {
-        try {
-
-            $sql = <<<SQL
-SELECT soundcloud_id AS id,
-       soundcloud_upload_time
-FROM CC_FILES
-WHERE (id != -2
-       AND id != -3)
-  AND (soundcloud_upload_time >= (now() - (INTERVAL '1 day')))
-SQL;
-
-            $rows = Application_Common_Database::prepareAndExecute($sql);
-
-            return count($rows);
-        } catch (Exception $e) {
-            header('HTTP/1.0 503 Service Unavailable');
-            Logging::info("Could not connect to database.");
-            exit;
-        }
-
-    }
-
-    public function setSoundCloudLinkToFile($link_to_file)
-    {
-        $this->_file->setDbSoundCloudLinkToFile($link_to_file)
-        ->save();
-    }
-
-    public function getSoundCloudLinkToFile()
-    {
-        return $this->_file->getDbSoundCloudLinkToFile();
-    }
-
-    public function setSoundCloudFileId($p_soundcloud_id)
-    {
-        $this->_file->setDbSoundCloudId($p_soundcloud_id)
-            ->save();
-    }
-
-    public function getSoundCloudId()
-    {
-        return $this->_file->getDbSoundCloudId();
-    }
-
-    public function setSoundCloudErrorCode($code)
-    {
-        $this->_file->setDbSoundCloudErrorCode($code)
-            ->save();
-    }
-
-    public function getSoundCloudErrorCode()
-    {
-        return $this->_file->getDbSoundCloudErrorCode();
-    }
-
-    public function setSoundCloudErrorMsg($msg)
-    {
-        $this->_file->setDbSoundCloudErrorMsg($msg)
-            ->save();
-    }
-
-    public function getSoundCloudErrorMsg()
-    {
-        return $this->_file->getDbSoundCloudErrorMsg();
-    }
-
     public function getDirectory()
     {
         return $this->_file->getDbDirectory();
@@ -1219,12 +1113,6 @@ SQL;
         $this->_file->setDbHidden($flag)
             ->save();
     }
-    public function setSoundCloudUploadTime($time)
-    {
-        $this->_file->setDbSoundCloundUploadTime($time)
-            ->save();
-    }
-
 
     // This method seems to be unsued everywhere so I've commented it out
     // If it's absence does not have any effect then it will be completely
@@ -1237,52 +1125,6 @@ SQL;
     public function getFileOwnerId()
     {
         return $this->_file->getDbOwnerId();
-    }
-
-    // note: never call this method from controllers because it does a sleep
-    public function uploadToSoundCloud()
-    {
-        $CC_CONFIG = Config::getConfig();
-
-        $file = $this->_file;
-        if (is_null($file)) {
-            return "File does not exist";
-        }
-        if (Application_Model_Preferences::GetUploadToSoundcloudOption()) {
-            for ($i=0; $i<$CC_CONFIG['soundcloud-connection-retries']; $i++) {
-                $description = $file->getDbTrackTitle();
-                $tag         = array();
-                $genre       = $file->getDbGenre();
-                $release     = $file->getDbUtime();
-                try {
-                    $filePaths = $this->getFilePaths();
-                    $filePath = $filePaths[0];
-                    $soundcloud     = new Application_Model_Soundcloud();
-                    $soundcloud_res = $soundcloud->uploadTrack(
-                        $filePath, $this->getName(), $description,
-                        $tag, $release, $genre);
-                    $this->setSoundCloudFileId($soundcloud_res['id']);
-                    $this->setSoundCloudLinkToFile($soundcloud_res['permalink_url']);
-                    $this->setSoundCloudUploadTime(new DateTime("now"), new DateTimeZone("UTC"));
-                    break;
-                } catch (Services_Soundcloud_Invalid_Http_Response_Code_Exception $e) {
-                    $code = $e->getHttpCode();
-                    $msg  = $e->getHttpBody();
-                    // TODO : Do not parse JSON by hand
-                    $temp = explode('"error":',$msg);
-                    $msg  = trim($temp[1], '"}');
-                    $this->setSoundCloudErrorCode($code);
-                    $this->setSoundCloudErrorMsg($msg);
-                    // setting sc id to -3 which indicates error
-                    $this->setSoundCloudFileId(SOUNDCLOUD_ERROR);
-                    if (!in_array($code, array(0, 100))) {
-                        break;
-                    }
-                }
-
-                sleep($CC_CONFIG['soundcloud-connection-wait']);
-            }
-        }
     }
 
     public static function setIsPlaylist($p_playlistItems, $p_type, $p_status) {

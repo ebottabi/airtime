@@ -64,6 +64,7 @@ class ApiController extends Zend_Controller_Action
                 ->addActionContext('update-stream-setting-table'   , 'json')
                 ->addActionContext('update-replay-gain-value'      , 'json')
                 ->addActionContext('update-cue-values-by-silan'    , 'json')
+                ->addActionContext('get-usability-hint'            , 'json')
                 ->initContext();
     }
 
@@ -648,11 +649,6 @@ class ApiController extends Zend_Controller_Action
         // fields
         $file->setMetadataValue('MDATA_KEY_CREATOR', "Airtime Show Recorder");
         $file->setMetadataValue('MDATA_KEY_TRACKNUMBER', $show_instance_id);
-
-        if (!$showCanceled && Application_Model_Preferences::GetAutoUploadRecordedShowToSoundcloud()) {
-            $id = $file->getId();
-            Application_Model_Soundcloud::uploadSoundcloud($id);
-        }
     }
 
     public function mediaMonitorSetupAction()
@@ -1470,6 +1466,14 @@ class ApiController extends Zend_Controller_Action
             }
         }
         $this->_helper->json->sendJson(array(1));
+    }
+
+    public function getUsabilityHintAction()
+    {
+        $userPath = $this->_getParam("userPath");
+
+        $hint = Application_Common_UsabilityHints::getUsabilityHint($userPath);
+        $this->_helper->json->sendJson($hint);
     }
     
 }

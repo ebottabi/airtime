@@ -47,6 +47,7 @@ class PreferencesController extends Zend_Controller_Action
                 Application_Model_Preferences::SetDefaultLocale($values["locale"]);
                 Application_Model_Preferences::SetDefaultTimezone($values["timezone"]);
                 Application_Model_Preferences::SetWeekStartDay($values["weekStartDay"]);
+                Application_Model_Preferences::setRadioPageDisplayLoginButton($values["radioPageLoginButton"]);
 
                 $logoUploadElement = $form->getSubForm('preferences_general')->getElement('stationLogo');
                 $logoUploadElement->receive();
@@ -61,15 +62,9 @@ class PreferencesController extends Zend_Controller_Action
                 Application_Model_Preferences::setTuneinStationId($values["tunein_station_id"]);
                 Application_Model_Preferences::setTuneinPartnerKey($values["tunein_partner_key"]);
                 Application_Model_Preferences::setTuneinPartnerId($values["tunein_partner_id"]);
-
-                /*Application_Model_Preferences::SetUploadToSoundcloudOption($values["UploadToSoundcloudOption"]);
-                Application_Model_Preferences::SetSoundCloudDownloadbleOption($values["SoundCloudDownloadbleOption"]);
-                Application_Model_Preferences::SetSoundCloudUser($values["SoundCloudUser"]);
-                Application_Model_Preferences::SetSoundCloudPassword($values["SoundCloudPassword"]);
-                Application_Model_Preferences::SetSoundCloudTags($values["SoundCloudTags"]);
-                Application_Model_Preferences::SetSoundCloudGenre($values["SoundCloudGenre"]);
-                Application_Model_Preferences::SetSoundCloudTrackType($values["SoundCloudTrackType"]);
-                Application_Model_Preferences::SetSoundCloudLicense($values["SoundCloudLicense"]);*/
+                // SoundCloud Preferences
+                Application_Model_Preferences::setDefaultSoundCloudLicenseType($values["SoundCloudLicense"]);
+                Application_Model_Preferences::setDefaultSoundCloudSharingType($values["SoundCloudSharing"]);
 
                 $this->view->statusMsg = "<div class='success'>". _("Preferences updated.")."</div>";
                 $form = new Application_Form_Preferences();
