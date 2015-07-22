@@ -23,7 +23,7 @@ class Application_Form_Streams extends Zend_Form
                                 ->setRequired(false)
                                 ->setValue(($setting['icecast_vorbis_metadata'] == "true")?1:0)
                                 ->setDecorators(array('ViewHelper'));
-        if (Application_Model_Preferences::GetEnableStreamConf() == "false") {
+        if (Application_Model_Preference::GetEnableStreamConf() == "false") {
             $icecast_vorbis_metadata->setAttrib("readonly", true);
         }
         $this->addElement($icecast_vorbis_metadata);
@@ -33,7 +33,7 @@ class Application_Form_Streams extends Zend_Form
         $stream_format->setMultiOptions(array(_("Artist - Title"),
                                             _("Show - Artist - Title"),
                                             _("Station name - Show name")));
-        $stream_format->setValue(Application_Model_Preferences::GetStreamLabelFormat());
+        $stream_format->setValue(Application_Model_Preference::GetStreamLabelFormat());
         $stream_format->setDecorators(array('ViewHelper'));
         $this->addElement($stream_format);
         
@@ -45,13 +45,13 @@ class Application_Form_Streams extends Zend_Form
         
         $enable_replay_gain = new Zend_Form_Element_Checkbox("enableReplayGain");
         $enable_replay_gain->setLabel(_("Enable Replay Gain"))
-                           ->setValue(Application_Model_Preferences::GetEnableReplayGain())
+                           ->setValue(Application_Model_Preference::GetEnableReplayGain())
                            ->setDecorators(array('ViewHelper'));
         $this->addElement($enable_replay_gain);
         
         $replay_gain = new Zend_Form_Element_Hidden("replayGainModifier");
         $replay_gain->setLabel(_("Replay Gain Modifier"))
-        ->setValue(Application_Model_Preferences::getReplayGainModifier())
+        ->setValue(Application_Model_Preference::getReplayGainModifier())
         ->setAttribs(array('style' => "border: 0; color: #f6931f; font-weight: bold;"))
         ->setDecorators(array('ViewHelper'));
         $this->addElement($replay_gain);

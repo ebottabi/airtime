@@ -62,38 +62,38 @@ class NowPlayingController extends Zend_Controller_Action
 
             $values = $request->getPost();
             if ($values["Publicise"] != 1 && $form->isValid($values)) {
-                Application_Model_Preferences::SetSupportFeedback($values["SupportFeedback"]);
+                Application_Model_Preference::SetSupportFeedback($values["SupportFeedback"]);
 
                 if (isset($values["Privacy"])) {
-                    Application_Model_Preferences::SetPrivacyPolicyCheck($values["Privacy"]);
+                    Application_Model_Preference::SetPrivacyPolicyCheck($values["Privacy"]);
                 }
                 session_start();  //open session for writing again
                 // unset referrer
                 Zend_Session::namespaceUnset('referrer');
             } elseif ($values["Publicise"] == '1' && $form->isValid($values)) {
-                Application_Model_Preferences::SetHeadTitle($values["stnName"], $this->view);
-                Application_Model_Preferences::SetPhone($values["Phone"]);
-                Application_Model_Preferences::SetEmail($values["Email"]);
-                Application_Model_Preferences::SetStationWebSite($values["StationWebSite"]);
-                Application_Model_Preferences::SetPublicise($values["Publicise"]);
+                Application_Model_Preference::SetHeadTitle($values["stnName"], $this->view);
+                Application_Model_Preference::SetPhone($values["Phone"]);
+                Application_Model_Preference::SetEmail($values["Email"]);
+                Application_Model_Preference::SetStationWebSite($values["StationWebSite"]);
+                Application_Model_Preference::SetPublicise($values["Publicise"]);
 
                 $form->Logo->receive();
                 $imagePath = $form->Logo->getFileName();
 
-                Application_Model_Preferences::SetStationCountry($values["Country"]);
-                Application_Model_Preferences::SetStationCity($values["City"]);
-                Application_Model_Preferences::SetStationDescription($values["Description"]);
-                Application_Model_Preferences::SetStationLogo($imagePath);
-                Application_Model_Preferences::SetSupportFeedback($values["SupportFeedback"]);
+                Application_Model_Preference::SetStationCountry($values["Country"]);
+                Application_Model_Preference::SetStationCity($values["City"]);
+                Application_Model_Preference::SetStationDescription($values["Description"]);
+                Application_Model_Preference::SetStationLogo($imagePath);
+                Application_Model_Preference::SetSupportFeedback($values["SupportFeedback"]);
 
                 if (isset($values["Privacy"])) {
-                    Application_Model_Preferences::SetPrivacyPolicyCheck($values["Privacy"]);
+                    Application_Model_Preference::SetPrivacyPolicyCheck($values["Privacy"]);
                 }
                 session_start();  //open session for writing again
                 // unset referrer
                 Zend_Session::namespaceUnset('referrer');
             } else {
-                $logo = Application_Model_Preferences::GetStationLogo();
+                $logo = Application_Model_Preference::GetStationLogo();
                 if ($logo) {
                     $this->view->logoImg = $logo;
                 }
@@ -103,12 +103,12 @@ class NowPlayingController extends Zend_Controller_Action
         }
 
         //popup if previous page was login
-        if ($refer_sses->referrer == 'login' && Application_Model_Preferences::ShouldShowPopUp()
-                && !Application_Model_Preferences::GetSupportFeedback() && $user->isAdmin()){
+        if ($refer_sses->referrer == 'login' && Application_Model_Preference::ShouldShowPopUp()
+                && !Application_Model_Preference::GetSupportFeedback() && $user->isAdmin()){
 
             $form = new Application_Form_RegisterAirtime();
 
-            $logo = Application_Model_Preferences::GetStationLogo();
+            $logo = Application_Model_Preference::GetStationLogo();
             if ($logo) {
                 $this->view->logoImg = $logo;
             }
@@ -121,7 +121,7 @@ class NowPlayingController extends Zend_Controller_Action
         if (!$user->isGuest()) {
             $disableLib = false;
 
-            $data = Application_Model_Preferences::getNowPlayingScreenSettings();
+            $data = Application_Model_Preference::getNowPlayingScreenSettings();
             if (!is_null($data)) {
                 if ($data["library"] == "true") {
                     $showLib = true;
@@ -138,7 +138,7 @@ class NowPlayingController extends Zend_Controller_Action
             $this->view->headScript()->appendFile($baseUrl.'js/airtime/library/library.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
             $this->view->headScript()->appendFile($baseUrl.'js/airtime/library/events/library_showbuilder.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
 
-            $data = Application_Model_Preferences::getCurrentLibraryTableSetting();
+            $data = Application_Model_Preference::getCurrentLibraryTableSetting();
             if (!is_null($data)) {
                 $libraryTable = json_encode($data);
                 $this->view->headScript()->appendScript("localStorage.setItem( 'datatables-library', JSON.stringify($libraryTable) );");
@@ -147,7 +147,7 @@ class NowPlayingController extends Zend_Controller_Action
             }
         }
 
-        $data = Application_Model_Preferences::getTimelineDatatableSetting();
+        $data = Application_Model_Preference::getTimelineDatatableSetting();
         if (!is_null($data)) {
             $timelineTable = json_encode($data);
             $this->view->headScript()->appendScript("localStorage.setItem( 'datatables-timeline', JSON.stringify($timelineTable) );");
@@ -161,7 +161,7 @@ class NowPlayingController extends Zend_Controller_Action
         $to   = $request->getParam("to", $now + (3*60*60));
 
         $utcTimezone = new DateTimeZone("UTC");
-        $displayTimeZone = new DateTimeZone(Application_Model_Preferences::GetTimezone());
+        $displayTimeZone = new DateTimeZone(Application_Model_Preference::GetTimezone());
 
         $start = DateTime::createFromFormat("U", $from, $utcTimezone);
         $start->setTimezone($displayTimeZone);
@@ -228,7 +228,7 @@ class NowPlayingController extends Zend_Controller_Action
             return;
         }
 
-        $displayTimeZone = new DateTimeZone(Application_Model_Preferences::GetTimezone());
+        $displayTimeZone = new DateTimeZone(Application_Model_Preference::GetTimezone());
         
         $start = $instance->getDbStarts(null);
         $start->setTimezone($displayTimeZone);

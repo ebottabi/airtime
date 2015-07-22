@@ -27,18 +27,15 @@
     <dd id="locale-element">
       <?php echo $this->element->getElement('locale') ?>
     </dd>
-    <a id="translate_link" href=<?php echo AIRTIME_TRANSIFEX_URL?>>
-        <?php echo _(sprintf("Help Translate %s", PRODUCT_NAME)) ?>
-    </a>
 
     <?php echo $this->element->getElement('csrf') ?>
     
-    <?php if (Application_Model_Preferences::GetEnableSystemEmail()): ?>
+<!--    --><?php //if (Application_Model_Preference::GetEnableSystemEmail()): ?>
         <dt id="reset-label" class="hidden">&nbsp;</dt>
         <dd id="reset-element" class="text-right">
           <a href="<?php echo $this->baseUrl('login/password-restore'); ?>" class="link reset"><?php echo _("Reset password") ?></a>
         </dd>
-    <?php endif; ?>
+<!--    --><?php //endif; ?>
     <?php echo $this->element->getElement('captcha') ?>
     <dt id="submit-label">&nbsp;</dt>
     <dd id="submit-element">

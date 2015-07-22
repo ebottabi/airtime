@@ -419,7 +419,7 @@ SQL;
         }
 
         //Update the user's disk usage
-        Application_Model_Preferences::updateDiskUsage(-1 * $filesize);
+        Application_Model_Preference::updateDiskUsage(-1 * $filesize);
         
         //Explicitly update any playlist's and block's length that contain
         //the file getting deleted
@@ -831,7 +831,7 @@ SQL;
         self::updatePastFilesIsScheduled();
         $results = Application_Model_Datatables::findEntries($con, $displayColumns, $fromTable, $datatables);
 
-        $displayTimezone = new DateTimeZone(Application_Model_Preferences::GetUserTimezone());
+        $displayTimezone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
         $utcTimezone = new DateTimeZone("UTC");
         
         foreach ($results['aaData'] as &$row) {

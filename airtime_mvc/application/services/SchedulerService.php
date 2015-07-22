@@ -173,7 +173,7 @@ class Application_Service_SchedulerService
         $con = Propel::getConnection();
         
         if (is_null($instanceId)) {
-            $showsPopulatedUntil = Application_Model_Preferences::GetShowsPopulatedUntil();
+            $showsPopulatedUntil = Application_Model_Preference::GetShowsPopulatedUntil();
 
             $showInstanceWithMostRecentSchedule = CcShowInstancesQuery::create()
                 ->filterByDbShowId($showId)
@@ -252,7 +252,7 @@ class Application_Service_SchedulerService
                                 Application_Common_Database::COLUMN), 
                         new DateTimeZone("UTC"));
                 
-                $defaultCrossfadeDuration = Application_Model_Preferences::GetDefaultCrossfadeDuration();
+                $defaultCrossfadeDuration = Application_Model_Preference::GetDefaultCrossfadeDuration();
                 unset($values);
                 $values = array();
                 foreach ($linkedShowSchedule as $item) {
@@ -345,7 +345,7 @@ class Application_Service_SchedulerService
                         ->save();
 
                     $nextStartDT = self::findTimeDifference($endTimeDT,
-                        Application_Model_Preferences::GetDefaultCrossfadeDuration());
+                        Application_Model_Preference::GetDefaultCrossfadeDuration());
                 } //foreach show item
 
                 $ccShowInstance

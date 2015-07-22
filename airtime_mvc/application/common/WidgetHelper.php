@@ -16,7 +16,7 @@ class WidgetHelper
         $result = array();
 
         // default to the station timezone
-        $timezone = Application_Model_Preferences::GetDefaultTimezone();
+        $timezone = Application_Model_Preference::GetDefaultTimezone();
         $userDefinedTimezone = strtolower($timezone);
         // if the timezone defined by the user exists, use that
         if (array_key_exists($userDefinedTimezone, timezone_abbreviations_list())) {

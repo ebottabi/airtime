@@ -16,8 +16,8 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
             array('ViewScript', array('viewScript' => 'form/preferences_general.phtml'))
         ));
 
-        $defaultFadeIn = Application_Model_Preferences::GetDefaultFadeIn();
-        $defaultFadeOut = Application_Model_Preferences::GetDefaultFadeOut();
+        $defaultFadeIn = Application_Model_Preference::GetDefaultFadeIn();
+        $defaultFadeOut = Application_Model_Preference::GetDefaultFadeOut();
 
         //Station name
         $this->addElement('text', 'stationName', array(
@@ -25,13 +25,13 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
             'label' => _('Station Name'),
             'required' => false,
             'filters' => array('StringTrim'),
-            'value' => Application_Model_Preferences::GetStationName(),
+            'value' => Application_Model_Preference::GetStationName(),
         ));
 
         // Station description
         $stationDescription = new Zend_Form_Element_Textarea("stationDescription");
         $stationDescription->setLabel(_('Station Description'));
-        $stationDescription->setValue(Application_Model_Preferences::GetStationDescription());
+        $stationDescription->setValue(Application_Model_Preference::GetStationDescription());
         $stationDescription->setRequired(false);
         $stationDescription->setValidators(array(array('StringLength', false, array(0, $maxLens['description']))));
         $stationDescription->setAttrib('rows', 4);
@@ -67,7 +67,7 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
                     $notEmptyValidator,
                     array('regex', false, array('/^[0-9]+(\.\d+)?$/', 'messages' => _('Please enter a time in seconds (eg. 0.5)')))
             ),
-            'value' => Application_Model_Preferences::GetDefaultCrossfadeDuration(),
+            'value' => Application_Model_Preference::GetDefaultCrossfadeDuration(),
         ));
 
         //Default station fade in
@@ -105,7 +105,7 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
                                             _("Disabled"),
                                             _("Enabled"),
                                         ));
-        $third_party_api->setValue(Application_Model_Preferences::GetAllow3rdPartyApi());
+        $third_party_api->setValue(Application_Model_Preference::GetAllow3rdPartyApi());
         $third_party_api->setDescription(_('Enabling this feature will allow Airtime to provide schedule data
                                             to external widgets that can be embedded in your website.'));
         $third_party_api->setSeparator(' '); //No <br> between radio buttons
@@ -119,21 +119,21 @@ class Application_Form_GeneralPreferences extends Zend_Form_SubForm
         $locale = new Zend_Form_Element_Select("locale");
         $locale->setLabel(_("Default Language"));
         $locale->setMultiOptions(Application_Model_Locale::getLocales());
-        $locale->setValue(Application_Model_Preferences::GetDefaultLocale());
+        $locale->setValue(Application_Model_Preference::GetDefaultLocale());
         $this->addElement($locale);
 
         /* Form Element for setting the Timezone */
         $timezone = new Zend_Form_Element_Select("timezone");
         $timezone->setLabel(_("Station Timezone"));
         $timezone->setMultiOptions(Application_Common_Timezone::getTimezones());
-        $timezone->setValue(Application_Model_Preferences::GetDefaultTimezone());
+        $timezone->setValue(Application_Model_Preference::GetDefaultTimezone());
         $this->addElement($timezone);
 
         /* Form Element for setting which day is the start of the week */
         $week_start_day = new Zend_Form_Element_Select("weekStartDay");
         $week_start_day->setLabel(_("Week Starts On"));
         $week_start_day->setMultiOptions($this->getWeekStartDays());
-        $week_start_day->setValue(Application_Model_Preferences::GetWeekStartDay());
+        $week_start_day->setValue(Application_Model_Preference::GetWeekStartDay());
         $this->addElement($week_start_day);
 
         $radioPageLoginButton = new Zend_Form_Element_Checkbox("radioPageLoginButton");

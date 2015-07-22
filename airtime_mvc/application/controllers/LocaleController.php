@@ -13,7 +13,7 @@ class LocaleController extends Zend_Controller_Action
         $this->_helper->viewRenderer->setNoRender(true);
         header("Content-type: text/javascript");
 
-        $locale = Application_Model_Preferences::GetLocale();
+        $locale = Application_Model_Preference::GetLocale();
         echo "var datatables_dict =" .
             file_get_contents(Application_Common_OsPath::join(
                 //$_SERVER["DOCUMENT_ROOT"],

@@ -13,7 +13,7 @@ class Application_Service_HistoryService
 	public function __construct()
 	{
 		$this->con = isset($con) ? $con : Propel::getConnection(CcPlayoutHistoryPeer::DATABASE_NAME);
-		$this->timezone = Application_Model_Preferences::GetTimezone();
+		$this->timezone = Application_Model_Preference::GetTimezone();
 	}
 
 	public function getSupportedTemplateTypes()
@@ -1334,7 +1334,7 @@ class Application_Service_HistoryService
 	public function getConfiguredItemTemplate() {
 
 		try {
-			$id = Application_Model_Preferences::GetHistoryItemTemplate();
+			$id = Application_Model_Preference::GetHistoryItemTemplate();
 
 			if (is_numeric($id)) {
 				$template = $this->loadTemplate($id);
@@ -1351,7 +1351,7 @@ class Application_Service_HistoryService
 
 	public function setConfiguredItemTemplate($id) {
 		try {
-			Application_Model_Preferences::SetHistoryItemTemplate($id);
+			Application_Model_Preference::SetHistoryItemTemplate($id);
 		}
 		catch (Exception $e) {
 			throw $e;
@@ -1361,7 +1361,7 @@ class Application_Service_HistoryService
 	public function getConfiguredFileTemplate() {
 
 		try {
-			$id = Application_Model_Preferences::GetHistoryFileTemplate();
+			$id = Application_Model_Preference::GetHistoryFileTemplate();
 
 			if (is_numeric($id)) {
 				$template = $this->loadTemplate($id);
@@ -1378,7 +1378,7 @@ class Application_Service_HistoryService
 
 	public function setConfiguredFileTemplate($id) {
 		try {
-			Application_Model_Preferences::SetHistoryFileTemplate($id);
+			Application_Model_Preference::SetHistoryFileTemplate($id);
 		}
 		catch (Exception $e) {
 			throw $e;
@@ -1403,8 +1403,8 @@ class Application_Service_HistoryService
 	public function getConfiguredTemplateIds() {
 
 		try {
-			$id = Application_Model_Preferences::GetHistoryItemTemplate();
-			$id2 = Application_Model_Preferences::GetHistoryFileTemplate();
+			$id = Application_Model_Preference::GetHistoryItemTemplate();
+			$id2 = Application_Model_Preference::GetHistoryFileTemplate();
 
 			$configured = array();
 

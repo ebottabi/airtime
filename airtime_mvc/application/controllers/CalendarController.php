@@ -58,12 +58,12 @@ class CalendarController extends Zend_Controller_Action
 
         $this->view->headScript()->appendScript(
             "var calendarPref = {};\n".
-            "calendarPref.weekStart = ".Application_Model_Preferences::GetWeekStartDay().";\n".
+            "calendarPref.weekStart = ".Application_Model_Preference::GetWeekStartDay().";\n".
             "calendarPref.timestamp = ".time().";\n".
             "calendarPref.timezoneOffset = ".Application_Common_DateHelper::getUserTimezoneOffset().";\n".
-            "calendarPref.timeScale = '".Application_Model_Preferences::GetCalendarTimeScale()."';\n".
-            "calendarPref.timeInterval = ".Application_Model_Preferences::GetCalendarTimeInterval().";\n".
-            "calendarPref.weekStartDay = ".Application_Model_Preferences::GetWeekStartDay().";\n".
+            "calendarPref.timeScale = '".Application_Model_Preference::GetCalendarTimeScale()."';\n".
+            "calendarPref.timeInterval = ".Application_Model_Preference::GetCalendarTimeInterval().";\n".
+            "calendarPref.weekStartDay = ".Application_Model_Preference::GetWeekStartDay().";\n".
             "var calendarEvents = $events;"
         );
 
@@ -128,7 +128,7 @@ class CalendarController extends Zend_Controller_Action
         $service_user = new Application_Service_UserService();
         $currentUser = $service_user->getCurrentUser();
 
-        $userTimezone = new DateTimeZone(Application_Model_Preferences::GetUserTimezone());
+        $userTimezone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
         
         $start = new DateTime($this->_getParam('start', null), $userTimezone);
         $start->setTimezone(new DateTimeZone("UTC"));
@@ -147,7 +147,7 @@ class CalendarController extends Zend_Controller_Action
         $user = new Application_Model_User($userInfo->id);
         $editable = $user->isUserType(array(UTYPE_SUPERADMIN, UTYPE_ADMIN, UTYPE_PROGRAM_MANAGER));
 
-        $calendar_interval = Application_Model_Preferences::GetCalendarTimeScale();
+        $calendar_interval = Application_Model_Preference::GetCalendarTimeScale();
         if ($calendar_interval == "agendaDay") {
             list($start, $end) = Application_Model_Show::getStartEndCurrentDayView();
         } else if ($calendar_interval == "agendaWeek") {
@@ -334,12 +334,12 @@ class CalendarController extends Zend_Controller_Action
         
         $source_status = array();
         $switch_status = array();
-        $live_dj = Application_Model_Preferences::GetSourceStatus("live_dj");
-        $master_dj = Application_Model_Preferences::GetSourceStatus("master_dj");
+        $live_dj = Application_Model_Preference::GetSourceStatus("live_dj");
+        $master_dj = Application_Model_Preference::GetSourceStatus("master_dj");
 
-        $scheduled_play_switch = Application_Model_Preferences::GetSourceSwitchStatus("scheduled_play");
-        $live_dj_switch = Application_Model_Preferences::GetSourceSwitchStatus("live_dj");
-        $master_dj_switch = Application_Model_Preferences::GetSourceSwitchStatus("master_dj");
+        $scheduled_play_switch = Application_Model_Preference::GetSourceSwitchStatus("scheduled_play");
+        $live_dj_switch = Application_Model_Preference::GetSourceSwitchStatus("live_dj");
+        $master_dj_switch = Application_Model_Preference::GetSourceSwitchStatus("master_dj");
 
         //might not be the correct place to implement this but for now let's just do it here
         $source_status['live_dj_source'] = $live_dj;
@@ -379,7 +379,7 @@ class CalendarController extends Zend_Controller_Action
             $originalShowStart = $originalShow->getShowInstanceStart();
 
             //convert from UTC to user's timezone for display.
-            $displayTimeZone = new DateTimeZone(Application_Model_Preferences::GetTimezone());
+            $displayTimeZone = new DateTimeZone(Application_Model_Preference::GetTimezone());
             $originalDateTime = new DateTime($originalShowStart, new DateTimeZone("UTC"));
             $originalDateTime->setTimezone($displayTimeZone);
             
@@ -719,7 +719,7 @@ class CalendarController extends Zend_Controller_Action
      */
     public function setTimeScaleAction()
     {
-        Application_Model_Preferences::SetCalendarTimeScale($this->_getParam('timeScale'));
+        Application_Model_Preference::SetCalendarTimeScale($this->_getParam('timeScale'));
     }
 
 	/**
@@ -728,7 +728,7 @@ class CalendarController extends Zend_Controller_Action
      */
     public function setTimeIntervalAction()
     {
-        Application_Model_Preferences::SetCalendarTimeInterval($this->_getParam('timeInterval'));
+        Application_Model_Preference::SetCalendarTimeInterval($this->_getParam('timeInterval'));
     }
 
     public function calculateDurationAction()

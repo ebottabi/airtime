@@ -14,7 +14,7 @@ if (!isset($configRun) || !$configRun) {
 require_once 'autoload.php';
 
 require_once CONFIG_PATH . "constants.php";
-require_once 'Preferences.php';
+require_once 'Preference.php';
 require_once 'Locale.php';
 require_once "DateHelper.php";
 require_once "LocaleHelper.php";
@@ -185,13 +185,13 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
 
         //These timezones are needed to adjust javascript Date objects on the client to make sense to the user's set timezone
         //or the server's set timezone.
-        $serverTimeZone = new DateTimeZone(Application_Model_Preferences::GetDefaultTimezone());
+        $serverTimeZone = new DateTimeZone(Application_Model_Preference::GetDefaultTimezone());
         $now = new DateTime("now", $serverTimeZone);
         $offset = $now->format("Z") * -1;
         $view->headScript()->appendScript("var serverTimezoneOffset = {$offset}; //in seconds");
 
         if (class_exists("Zend_Auth", false) && Zend_Auth::getInstance()->hasIdentity()) {
-            $userTimeZone = new DateTimeZone(Application_Model_Preferences::GetUserTimezone());
+            $userTimeZone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
             $now = new DateTime("now", $userTimeZone);
             $offset = $now->format("Z") * -1;
             $view->headScript()->appendScript("var userTimezoneOffset = {$offset}; //in seconds");
@@ -220,10 +220,10 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
             && strpos($_SERVER['REQUEST_URI'], 'Dashboard/stream-player') === false
             && strpos($_SERVER['REQUEST_URI'], 'audio-preview') === false
             && $_SERVER['REQUEST_URI'] != "/") {
-            $plan_level = strval(Application_Model_Preferences::GetPlanLevel());
+            $plan_level = strval(Application_Model_Preference::GetPlanLevel());
             // Since the Hobbyist plan doesn't come with Live Chat support, don't enable it
-            if (Application_Model_Preferences::GetLiveChatEnabled() && $plan_level !== 'hobbyist') {
-                $client_id = strval(Application_Model_Preferences::GetClientId());
+            if (Application_Model_Preference::GetLiveChatEnabled() && $plan_level !== 'hobbyist') {
+                $client_id = strval(Application_Model_Preference::GetClientId());
                 $station_url = $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
                 $view->headScript()->appendScript("var livechat_client_id = '$client_id';\n" .
                     "var livechat_plan_type = '$plan_level';\n" .
@@ -242,13 +242,13 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
     {
         $view = $this->getResource('view');
         $view->addHelperPath(APPLICATION_PATH . 'views/helpers', 'Airtime_View_Helper');
-        $view->assign('suspended', (Application_Model_Preferences::getProvisioningStatus() == PROVISIONING_STATUS_SUSPENDED));
+        $view->assign('suspended', (Application_Model_Preference::getProvisioningStatus() == PROVISIONING_STATUS_SUSPENDED));
     }
 
     protected function _initTitle()
     {
         $view = $this->getResource('view');
-        $view->headTitle(Application_Model_Preferences::GetHeadTitle());
+        $view->headTitle(Application_Model_Preference::GetHeadTitle());
     }
 
     protected function _initZFDebug()

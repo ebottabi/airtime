@@ -56,7 +56,7 @@ class WhmcsLoginController extends Zend_Controller_Action
             
             //set the user locale in case user changed it in when logging in
             //$locale = $form->getValue('locale');
-            //Application_Model_Preferences::SetUserLocale($locale);
+            //Application_Model_Preference::SetUserLocale($locale);
 
             $this->_redirect('now-playing');
         }     
@@ -185,7 +185,7 @@ class WHMCS_Auth_Adapter implements Zend_Auth_Adapter_Interface {
     {
         //Do a quick safety check to ensure the client ID we're authenticating
         //matches up to the owner of this instance.
-        if ($clientId != Application_Model_Preferences::GetClientId())
+        if ($clientId != Application_Model_Preference::GetClientId())
         {
             return false; 
         }

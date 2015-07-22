@@ -18,7 +18,7 @@ class LoginController extends Zend_Controller_Action
         
         $request = $this->getRequest();
         $response = $this->getResponse();
-        $stationLocale = Application_Model_Preferences::GetDefaultLocale();
+        $stationLocale = Application_Model_Preference::GetDefaultLocale();
         
         //Enable AJAX requests from www.airtime.pro for the sign-in process.
         CORSHelper::enableATProCrossOriginRequests($request, $response);
@@ -76,7 +76,7 @@ class LoginController extends Zend_Controller_Action
                     Application_Model_Subjects::resetLoginAttempts($username);
 
                     //set the user locale in case user changed it in when logging in
-                    Application_Model_Preferences::SetUserLocale($locale);
+                    Application_Model_Preference::SetUserLocale($locale);
 
                     $this->_redirect('now-playing');
                 } else {
@@ -87,7 +87,7 @@ class LoginController extends Zend_Controller_Action
                     if ($result->isValid()) {
                         Zend_Session::regenerateId();
                         //set the user locale in case user changed it in when logging in
-                        Application_Model_Preferences::SetUserLocale($locale);
+                        Application_Model_Preference::SetUserLocale($locale);
                         
                         $this->_redirect('now-playing');
                     }
@@ -110,7 +110,7 @@ class LoginController extends Zend_Controller_Action
         $this->view->message = $message;
         $this->view->error = $error;
         $this->view->form = $form;
-        $this->view->airtimeVersion = Application_Model_Preferences::GetAirtimeVersion();
+        $this->view->airtimeVersion = Application_Model_Preference::GetAirtimeVersion();
         $this->view->airtimeCopyright = AIRTIME_COPYRIGHT_DATE;
         if (isset($CC_CONFIG['demo'])) {
             $this->view->demo = $CC_CONFIG['demo'];
@@ -136,53 +136,53 @@ class LoginController extends Zend_Controller_Action
         $this->view->headScript()->appendFile($baseUrl.'js/airtime/login/password-restore.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
 
         $request = $this->getRequest();
-        $stationLocale = Application_Model_Preferences::GetDefaultLocale();
+        $stationLocale = Application_Model_Preference::GetDefaultLocale();
         
         Application_Model_Locale::configureLocalization($request->getcookie('airtime_locale', $stationLocale));
 
-        if (!Application_Model_Preferences::GetEnableSystemEmail()) {
-            $this->_redirect('login');
-        } else {
-            //uses separate layout without a navigation.
-            $this->_helper->layout->setLayout('login');
+//        if (!Application_Model_Preference::GetEnableSystemEmail()) {
+//            $this->_redirect('login');
+//        } else {
+        //uses separate layout without a navigation.
+        $this->_helper->layout->setLayout('login');
 
-            $form = new Application_Form_PasswordRestore();
+        $form = new Application_Form_PasswordRestore();
 
-            $request = $this->getRequest();
-            if ($request->isPost() && $form->isValid($request->getPost())) {
-                if (is_null($form->username->getValue()) || $form->username->getValue() == '') {
-                    $user = CcSubjsQuery::create()
-                        ->filterByDbEmail($form->email->getValue())
-                        ->findOne();
-                } else {
-                    $user = CcSubjsQuery::create()
-                        ->filterByDbEmail($form->email->getValue())
-                        ->filterByDbLogin($form->username->getValue())
-                        ->findOne();
-                }
-
-                if (!empty($user)) {
-                    $auth = new Application_Model_Auth();
-
-                    $success = $auth->sendPasswordRestoreLink($user, $this->view);
-                    if ($success) {
-                        $this->_helper->redirector('password-restore-after', 'login');
-                    } else {
-                        $form->email->addError($this->view->translate(_("Email could not be sent. Check your mail server settings and ensure it has been configured properly.")));
-                    }
-                } else {
-                    $form->email->addError($this->view->translate(_("Given email not found.")));
-                }
+        $request = $this->getRequest();
+        if ($request->isPost() && $form->isValid($request->getPost())) {
+            if (is_null($form->username->getValue()) || $form->username->getValue() == '') {
+                $user = CcSubjsQuery::create()
+                    ->filterByDbEmail($form->email->getValue())
+                    ->findOne();
+            } else {
+                $user = CcSubjsQuery::create()
+                    ->filterByDbEmail($form->email->getValue())
+                    ->filterByDbLogin($form->username->getValue())
+                    ->findOne();
             }
 
-            $this->view->form = $form;
+            if (!empty($user)) {
+                $auth = new Application_Model_Auth();
+
+                $success = $auth->sendPasswordRestoreLink($user, $this->view);
+                if ($success) {
+                    $this->_helper->redirector('password-restore-after', 'login');
+                } else {
+                    $form->email->addError($this->view->translate(_("Email could not be sent. Check your mail server settings and ensure it has been configured properly.")));
+                }
+            } else {
+                $form->email->addError($this->view->translate(_("Given email not found.")));
+            }
         }
+
+        $this->view->form = $form;
+//        }
     }
 
     public function passwordRestoreAfterAction()
     {
         $request = $this->getRequest();
-        $stationLocale = Application_Model_Preferences::GetDefaultLocale();
+        $stationLocale = Application_Model_Preference::GetDefaultLocale();
         
         Application_Model_Locale::configureLocalization($request->getcookie('airtime_locale', $stationLocale));
 
@@ -203,7 +203,7 @@ class LoginController extends Zend_Controller_Action
         $auth = new Application_Model_Auth();
         $user = CcSubjsQuery::create()->findPK($user_id);
         
-        $stationLocale = Application_Model_Preferences::GetDefaultLocale();
+        $stationLocale = Application_Model_Preference::GetDefaultLocale();
 
         Application_Model_Locale::configureLocalization($request->getcookie('airtime_locale', $stationLocale));
 

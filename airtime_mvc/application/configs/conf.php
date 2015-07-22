@@ -104,8 +104,8 @@ class Config {
     }
     
     public static function setAirtimeVersion() {
-        $airtime_version = Application_Model_Preferences::GetAirtimeVersion();
-        $uniqueid = Application_Model_Preferences::GetUniqueId();
+        $airtime_version = Application_Model_Preference::GetAirtimeVersion();
+        $uniqueid = Application_Model_Preference::GetUniqueId();
         $buildVersion = @file_get_contents(self::$rootDir."/../VERSION");
         self::$CC_CONFIG['airtime_version'] = md5($airtime_version.$buildVersion);
     }

@@ -17,7 +17,7 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
 
         $form = new Application_Form_Player();
 
-        $apiEnabled = Application_Model_Preferences::GetAllow3rdPartyApi();
+        $apiEnabled = Application_Model_Preference::GetAllow3rdPartyApi();
         $numEnabledStreams = $form->getElement('player_stream_url')->getAttrib('numberOfEnabledStreams');
 
         if ($numEnabledStreams > 0 && $apiEnabled) {

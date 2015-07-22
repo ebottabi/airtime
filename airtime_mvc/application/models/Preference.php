@@ -2,7 +2,7 @@
 
 require_once 'Cache.php';
 
-class Application_Model_Preferences
+class Application_Model_Preference
 {
     
     private static function getUserId()
@@ -1246,7 +1246,7 @@ class Application_Model_Preferences
     public static function ShouldShowPopUp()
     {
         $today = mktime(0, 0, 0, gmdate("m"), gmdate("d"), gmdate("Y"));
-        $remindDate = Application_Model_Preferences::GetRemindMeDate();
+        $remindDate = Application_Model_Preference::GetRemindMeDate();
         $retVal = false;
         
         if (is_null($remindDate) || ($remindDate != -1 && $today >= $remindDate)) {

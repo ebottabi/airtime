@@ -214,7 +214,7 @@ class Application_Service_ShowFormService
 
         //get timezone the show is created in
         $timezone = $ccShowInstance->getCcShow()->getFirstCcShowDay()->getDbTimezone();
-        //$timezone = new DateTimeZone(Application_Model_Preferences::GetDefaultTimezone());
+        //$timezone = new DateTimeZone(Application_Model_Preference::GetDefaultTimezone());
 
         //DateTime object in UTC
         $showStart = $ccShowInstance->getDbStarts(null);

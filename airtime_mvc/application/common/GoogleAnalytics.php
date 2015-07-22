@@ -11,15 +11,15 @@ class Application_Common_GoogleAnalytics
         $code = "";
 
         try {
-            $clientId = Application_Model_Preferences::GetClientId();
+            $clientId = Application_Model_Preference::GetClientId();
 
-            $plan = Application_Model_Preferences::GetPlanLevel();
+            $plan = Application_Model_Preference::GetPlanLevel();
             $isTrial = ($plan == "trial");
 
             //Figure out how long the customer has been around using a mega hack.
             //(I'm avoiding another round trip to WHMCS for now...)
             //We calculate it based on the trial end date...
-            $trialEndDateStr = Application_Model_Preferences::GetTrialEndingDate();
+            $trialEndDateStr = Application_Model_Preference::GetTrialEndingDate();
             if ($trialEndDateStr == '') {
                 $accountDuration = 0;
             } else {
@@ -55,8 +55,8 @@ class Application_Common_GoogleAnalytics
     /** Generate the JavaScript snippet that logs a trial to paid conversion  */
     public static function generateConversionTrackingJavaScript()
     {
-        $newPlan = Application_Model_Preferences::GetPlanLevel();
-        $oldPlan = Application_Model_Preferences::GetOldPlanLevel();
+        $newPlan = Application_Model_Preference::GetPlanLevel();
+        $oldPlan = Application_Model_Preference::GetOldPlanLevel();
 
         $code = "dataLayer.push({'event': 'Conversion',
                                  'Conversion': 'Trial to Paid',
@@ -75,7 +75,7 @@ class Application_Common_GoogleAnalytics
             return;
         }
 
-        $oldPlan = Application_Model_Preferences::GetOldPlanLevel();
+        $oldPlan = Application_Model_Preference::GetOldPlanLevel();
 
         if ($user->isSuperAdmin() &&
             !$user->isSourcefabricAdmin() &&

@@ -1,6 +1,6 @@
 <?php
 
-class PluploadController extends Zend_Controller_Action
+class AddMediaController extends Zend_Controller_Action
 {
     public function init()
     {
@@ -15,7 +15,7 @@ class PluploadController extends Zend_Controller_Action
         $CC_CONFIG = Config::getConfig();
 
         $baseUrl = Application_Common_OsPath::getBaseDir();
-        $locale = Application_Model_Preferences::GetLocale();
+        $locale = Application_Model_Preference::GetLocale();
 
         $this->view->headScript()->appendFile($baseUrl.'js/datatables/js/jquery.dataTables.js?'.$CC_CONFIG['airtime_version'], 'text/javascript');
         $this->view->headScript()->appendFile($baseUrl.'js/plupload/plupload.full.min.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
@@ -95,7 +95,7 @@ class PluploadController extends Zend_Controller_Action
         
         $uploadsArray = array();
         $utcTimezone = new DateTimeZone("UTC");
-        $displayTimezone = new DateTimeZone(Application_Model_Preferences::GetUserTimezone());
+        $displayTimezone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
         
         foreach ($recentUploads as $upload)
         {

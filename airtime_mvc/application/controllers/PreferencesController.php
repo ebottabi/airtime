@@ -38,16 +38,16 @@ class PreferencesController extends Zend_Controller_Action
             $values = $request->getPost();
             if ($form->isValid($values))
             {
-                Application_Model_Preferences::SetHeadTitle($values["stationName"], $this->view);
-                Application_Model_Preferences::SetStationDescription($values["stationDescription"]);
-                Application_Model_Preferences::SetDefaultCrossfadeDuration($values["stationDefaultCrossfadeDuration"]);
-                Application_Model_Preferences::SetDefaultFadeIn($values["stationDefaultFadeIn"]);
-                Application_Model_Preferences::SetDefaultFadeOut($values["stationDefaultFadeOut"]);
-                Application_Model_Preferences::SetAllow3rdPartyApi($values["thirdPartyApi"]);
-                Application_Model_Preferences::SetDefaultLocale($values["locale"]);
-                Application_Model_Preferences::SetDefaultTimezone($values["timezone"]);
-                Application_Model_Preferences::SetWeekStartDay($values["weekStartDay"]);
-                Application_Model_Preferences::setRadioPageDisplayLoginButton($values["radioPageLoginButton"]);
+                Application_Model_Preference::SetHeadTitle($values["stationName"], $this->view);
+                Application_Model_Preference::SetStationDescription($values["stationDescription"]);
+                Application_Model_Preference::SetDefaultCrossfadeDuration($values["stationDefaultCrossfadeDuration"]);
+                Application_Model_Preference::SetDefaultFadeIn($values["stationDefaultFadeIn"]);
+                Application_Model_Preference::SetDefaultFadeOut($values["stationDefaultFadeOut"]);
+                Application_Model_Preference::SetAllow3rdPartyApi($values["thirdPartyApi"]);
+                Application_Model_Preference::SetDefaultLocale($values["locale"]);
+                Application_Model_Preference::SetDefaultTimezone($values["timezone"]);
+                Application_Model_Preference::SetWeekStartDay($values["weekStartDay"]);
+                Application_Model_Preference::setRadioPageDisplayLoginButton($values["radioPageLoginButton"]);
 
                 $logoUploadElement = $form->getSubForm('preferences_general')->getElement('stationLogo');
                 $logoUploadElement->receive();
@@ -55,16 +55,16 @@ class PreferencesController extends Zend_Controller_Action
 
                 // Only update the image logo if the new logo is non-empty
                 if (!empty($imagePath) && $imagePath != "") {
-                    Application_Model_Preferences::SetStationLogo($imagePath);
+                    Application_Model_Preference::SetStationLogo($imagePath);
                 }
 
-                Application_Model_Preferences::setTuneinEnabled($values["enable_tunein"]);
-                Application_Model_Preferences::setTuneinStationId($values["tunein_station_id"]);
-                Application_Model_Preferences::setTuneinPartnerKey($values["tunein_partner_key"]);
-                Application_Model_Preferences::setTuneinPartnerId($values["tunein_partner_id"]);
+                Application_Model_Preference::setTuneinEnabled($values["enable_tunein"]);
+                Application_Model_Preference::setTuneinStationId($values["tunein_station_id"]);
+                Application_Model_Preference::setTuneinPartnerKey($values["tunein_partner_key"]);
+                Application_Model_Preference::setTuneinPartnerId($values["tunein_partner_id"]);
                 // SoundCloud Preferences
-                Application_Model_Preferences::setDefaultSoundCloudLicenseType($values["SoundCloudLicense"]);
-                Application_Model_Preferences::setDefaultSoundCloudSharingType($values["SoundCloudSharing"]);
+                Application_Model_Preference::setDefaultSoundCloudLicenseType($values["SoundCloudLicense"]);
+                Application_Model_Preference::setDefaultSoundCloudSharingType($values["SoundCloudSharing"]);
 
                 $this->view->statusMsg = "<div class='success'>". _("Preferences updated.")."</div>";
                 $form = new Application_Form_Preferences();
@@ -75,7 +75,7 @@ class PreferencesController extends Zend_Controller_Action
                 //$this->_helper->json->sendJson(array("valid"=>"false", "html"=>$this->view->render('preferences/index.phtml')));
             }
         }
-        $this->view->logoImg = Application_Model_Preferences::GetStationLogo();
+        $this->view->logoImg = Application_Model_Preference::GetStationLogo();
 
         $this->view->form = $form;
     }
@@ -97,23 +97,23 @@ class PreferencesController extends Zend_Controller_Action
         if ($request->isPost()) {
             $values = $request->getPost();
         	if ($form->isValid($values)) {
-                Application_Model_Preferences::SetHeadTitle($values["stationName"], $this->view);
-                Application_Model_Preferences::SetPhone($values["Phone"]);
-                Application_Model_Preferences::SetEmail($values["Email"]);
-                Application_Model_Preferences::SetStationWebSite($values["StationWebSite"]);
+                Application_Model_Preference::SetHeadTitle($values["stationName"], $this->view);
+                Application_Model_Preference::SetPhone($values["Phone"]);
+                Application_Model_Preference::SetEmail($values["Email"]);
+                Application_Model_Preference::SetStationWebSite($values["StationWebSite"]);
 
-                Application_Model_Preferences::SetStationCountry($values["Country"]);
-                Application_Model_Preferences::SetStationCity($values["City"]);
-                Application_Model_Preferences::SetStationDescription($values["Description"]);
+                Application_Model_Preference::SetStationCountry($values["Country"]);
+                Application_Model_Preference::SetStationCity($values["City"]);
+                Application_Model_Preference::SetStationDescription($values["Description"]);
                 if (isset($values["Privacy"])) {
-                    Application_Model_Preferences::SetPrivacyPolicyCheck($values["Privacy"]);
+                    Application_Model_Preference::SetPrivacyPolicyCheck($values["Privacy"]);
                 }
             }
             $this->view->statusMsg = "<div class='success'>"._("Support setting updated.")."</div>";
         }
 
         $privacyChecked = false;
-        if (Application_Model_Preferences::GetPrivacyPolicyCheck() == 1) {
+        if (Application_Model_Preference::GetPrivacyPolicyCheck() == 1) {
             $privacyChecked = true;
         }
         $this->view->privacyChecked = $privacyChecked;
@@ -133,7 +133,7 @@ class PreferencesController extends Zend_Controller_Action
         // Remove reliance on .phtml files to render requests
         $this->_helper->viewRenderer->setNoRender(true);
 
-        Application_Model_Preferences::SetStationLogo("");
+        Application_Model_Preference::SetStationLogo("");
     }
 
     public function streamsAction()
@@ -160,7 +160,7 @@ class PreferencesController extends Zend_Controller_Action
         );
 
         // get predefined type and bitrate from pref table
-        $temp_types = Application_Model_Preferences::GetStreamType();
+        $temp_types = Application_Model_Preference::GetStreamType();
         $stream_types = array();
         foreach ($temp_types as $type) {
             $type = strtolower(trim($type));
@@ -172,8 +172,8 @@ class PreferencesController extends Zend_Controller_Action
             $stream_types[$type] = $name;
         }
 
-        $temp_bitrate = Application_Model_Preferences::GetStreamBitrate();
-        $max_bitrate = intval(Application_Model_Preferences::GetMaxBitrate());
+        $temp_bitrate = Application_Model_Preference::GetStreamBitrate();
+        $max_bitrate = intval(Application_Model_Preference::GetMaxBitrate());
         $stream_bitrates = array();
         foreach ($temp_bitrate as $type) {
             if (intval($type) <= $max_bitrate) {
@@ -181,7 +181,7 @@ class PreferencesController extends Zend_Controller_Action
             }
         }
 
-        $num_of_stream = intval(Application_Model_Preferences::GetNumOfStreams());
+        $num_of_stream = intval(Application_Model_Preference::GetNumOfStreams());
         $form = new Application_Form_Streams();
 
         // $form->addElement('hash', 'csrf', array(
@@ -262,19 +262,19 @@ class PreferencesController extends Zend_Controller_Action
                 $s4_set_admin_pass = !empty($values["s4_data"]["admin_pass"]);
 
                 // this goes into cc_pref table
-                Application_Model_Preferences::SetStreamLabelFormat($values['streamFormat']);
-                Application_Model_Preferences::SetLiveStreamMasterUsername($values["master_username"]);
-                Application_Model_Preferences::SetLiveStreamMasterPassword($values["master_password"]);
-                Application_Model_Preferences::SetDefaultTransitionFade($values["transition_fade"]);
-                Application_Model_Preferences::SetAutoTransition($values["auto_transition"]);
-                Application_Model_Preferences::SetAutoSwitch($values["auto_switch"]);
+                Application_Model_Preference::SetStreamLabelFormat($values['streamFormat']);
+                Application_Model_Preference::SetLiveStreamMasterUsername($values["master_username"]);
+                Application_Model_Preference::SetLiveStreamMasterPassword($values["master_password"]);
+                Application_Model_Preference::SetDefaultTransitionFade($values["transition_fade"]);
+                Application_Model_Preference::SetAutoTransition($values["auto_transition"]);
+                Application_Model_Preference::SetAutoSwitch($values["auto_switch"]);
                 
                 // compare new values with current value
-                $changeRGenabled = Application_Model_Preferences::GetEnableReplayGain() != $values["enableReplayGain"];
-                $changeRGmodifier = Application_Model_Preferences::getReplayGainModifier() != $values["replayGainModifier"];
+                $changeRGenabled = Application_Model_Preference::GetEnableReplayGain() != $values["enableReplayGain"];
+                $changeRGmodifier = Application_Model_Preference::getReplayGainModifier() != $values["replayGainModifier"];
                 if ($changeRGenabled || $changeRGmodifier) {
-                    Application_Model_Preferences::SetEnableReplayGain($values["enableReplayGain"]);
-                    Application_Model_Preferences::setReplayGainModifier($values["replayGainModifier"]);
+                    Application_Model_Preference::SetEnableReplayGain($values["enableReplayGain"]);
+                    Application_Model_Preference::setReplayGainModifier($values["replayGainModifier"]);
                     $md = array('schedule' => Application_Model_Schedule::getSchedule());
                     Application_Model_RabbitMq::SendMessageToPypo("update_schedule", $md);
                     //Application_Model_RabbitMq::PushSchedule();
@@ -283,7 +283,7 @@ class PreferencesController extends Zend_Controller_Action
                 Application_Model_Streams::setOffAirMeta($values['offAirMeta']);
 
                 // store stream update timestamp
-                Application_Model_Preferences::SetStreamUpdateTimestamp();
+                Application_Model_Preference::SetStreamUpdateTimestamp();
 
                 $data = array();
                 $info = Application_Model_Streams::getStreamSetting();
@@ -295,7 +295,7 @@ class PreferencesController extends Zend_Controller_Action
                 Application_Model_RabbitMq::SendMessageToPypo("update_stream_setting", $data);
 
                 $live_stream_subform->updateVariables();
-                $this->view->enable_stream_conf = Application_Model_Preferences::GetEnableStreamConf();
+                $this->view->enable_stream_conf = Application_Model_Preference::GetEnableStreamConf();
                 $this->view->form = $form;
                 $this->view->num_stream = $num_of_stream;
                 $this->view->statusMsg = "<div class='success'>"._("Stream Setting Updated.")."</div>";
@@ -309,7 +309,7 @@ class PreferencesController extends Zend_Controller_Action
                 ));
             } else {
                 $live_stream_subform->updateVariables();
-                $this->view->enable_stream_conf = Application_Model_Preferences::GetEnableStreamConf();
+                $this->view->enable_stream_conf = Application_Model_Preference::GetEnableStreamConf();
                 $this->view->form = $form;
                 $this->view->num_stream = $num_of_stream;
                 $this->_helper->json->sendJson(array("valid"=>"false", "html"=>$this->view->render('preferences/streams.phtml')));
@@ -319,7 +319,7 @@ class PreferencesController extends Zend_Controller_Action
         $live_stream_subform->updateVariables();
 
         $this->view->num_stream = $num_of_stream;
-        $this->view->enable_stream_conf = Application_Model_Preferences::GetEnableStreamConf();
+        $this->view->enable_stream_conf = Application_Model_Preference::GetEnableStreamConf();
         $this->view->form = $form;
     }
 
@@ -415,7 +415,7 @@ class PreferencesController extends Zend_Controller_Action
     {
         $now = time();
         $res = false;
-        if (Application_Model_Preferences::GetImportTimestamp()+10 > $now) {
+        if (Application_Model_Preference::GetImportTimestamp()+10 > $now) {
             $res = true;
         }
         $this->_helper->json->sendJson($res);
@@ -424,7 +424,7 @@ class PreferencesController extends Zend_Controller_Action
     public function getLiquidsoapStatusAction()
     {
         $out = array();
-        $num_of_stream = intval(Application_Model_Preferences::GetNumOfStreams());
+        $num_of_stream = intval(Application_Model_Preference::GetNumOfStreams());
         for ($i=1; $i<=$num_of_stream; $i++) {
             $status = Application_Model_Streams::getLiquidsoapError($i);
             $status = $status == NULL?_("Problem with Liquidsoap..."):$status;
@@ -446,11 +446,11 @@ class PreferencesController extends Zend_Controller_Action
         $override = $request->getParam("override", false);
 
         if ($type == 'masterdj') {
-            Application_Model_Preferences::SetMasterDJSourceConnectionURL($url);
-            Application_Model_Preferences::SetMasterDjConnectionUrlOverride($override);
+            Application_Model_Preference::SetMasterDJSourceConnectionURL($url);
+            Application_Model_Preference::SetMasterDjConnectionUrlOverride($override);
         } elseif ($type == 'livedj') {
-            Application_Model_Preferences::SetLiveDJSourceConnectionURL($url);
-            Application_Model_Preferences::SetLiveDjConnectionUrlOverride($override);
+            Application_Model_Preference::SetLiveDJSourceConnectionURL($url);
+            Application_Model_Preference::SetLiveDjConnectionUrlOverride($override);
         }
 
         $this->_helper->json->sendJson(null);
@@ -461,7 +461,7 @@ class PreferencesController extends Zend_Controller_Action
         session_start(); //Open session for writing.
 
         $out = array();
-        $num_of_stream = intval(Application_Model_Preferences::GetNumOfStreams());
+        $num_of_stream = intval(Application_Model_Preference::GetNumOfStreams());
         for ($i=1; $i<=$num_of_stream; $i++) {
             if (Application_Model_Streams::getAdminPass('s'.$i)=='') {
                 $out["s".$i] = false;

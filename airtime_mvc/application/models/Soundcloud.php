@@ -15,8 +15,8 @@ class Application_Model_Soundcloud
 
     private function getToken()
     {
-        $username = Application_Model_Preferences::GetSoundCloudUser();
-        $password = Application_Model_Preferences::GetSoundCloudPassword();
+        $username = Application_Model_Preference::GetSoundCloudUser();
+        $password = Application_Model_Preference::GetSoundCloudPassword();
 
         $token = $this->_soundcloud->accessTokenResourceOwner($username, $password);
 
@@ -32,12 +32,12 @@ class Application_Model_Soundcloud
         }
         if (count($tags)) {
             $tags = join(" ", $tags);
-            $tags = $tags." ".Application_Model_Preferences::GetSoundCloudTags();
+            $tags = $tags." ".Application_Model_Preference::GetSoundCloudTags();
         } else {
-            $tags = Application_Model_Preferences::GetSoundCloudTags();
+            $tags = Application_Model_Preference::GetSoundCloudTags();
         }
 
-        $downloadable = Application_Model_Preferences::GetSoundCloudDownloadbleOption() == '1';
+        $downloadable = Application_Model_Preference::GetSoundCloudDownloadbleOption() == '1';
 
         $track_data = array(
             'track[sharing]'      => 'private',
@@ -63,18 +63,18 @@ class Application_Model_Soundcloud
         if (isset($genre) && $genre != "") {
             $track_data['track[genre]'] = $genre;
         } else {
-            $default_genre = Application_Model_Preferences::GetSoundCloudGenre();
+            $default_genre = Application_Model_Preference::GetSoundCloudGenre();
             if ($default_genre != "") {
                 $track_data['track[genre]'] = $default_genre;
             }
         }
 
-        $track_type = Application_Model_Preferences::GetSoundCloudTrackType();
+        $track_type = Application_Model_Preference::GetSoundCloudTrackType();
         if ($track_type != "") {
             $track_data['track[track_type]'] = $track_type;
         }
 
-        $license = Application_Model_Preferences::GetSoundCloudLicense();
+        $license = Application_Model_Preference::GetSoundCloudLicense();
         if ($license != "") {
             $track_data['track[license]'] = $license;
         }

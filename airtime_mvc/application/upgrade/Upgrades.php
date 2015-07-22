@@ -35,7 +35,7 @@ class UpgradeManager
 
     public static function checkIfUpgradeIsNeeded()
     {
-        $schemaVersion = Application_Model_Preferences::GetSchemaVersion();
+        $schemaVersion = Application_Model_Preference::GetSchemaVersion();
         $supportedSchemaVersions = self::getSupportedSchemaVersions();
         return !in_array($schemaVersion, $supportedSchemaVersions);
         // We shouldn't run the upgrade as a side-effect of this function!
@@ -137,7 +137,7 @@ abstract class AirtimeUpgrader
 
     public static function getCurrentSchemaVersion()
     {
-        return Application_Model_Preferences::GetSchemaVersion();
+        return Application_Model_Preference::GetSchemaVersion();
     }
 
     /**
@@ -280,7 +280,7 @@ class AirtimeUpgrader253 extends AirtimeUpgrader
         $storDir = isset($_SERVER['AIRTIME_BASE']) ? $_SERVER['AIRTIME_BASE']."srv/airtime/stor" : "/srv/airtime/stor";
         $diskUsage = shell_exec("du -sb $storDir | awk '{print $1}'");
 
-        Application_Model_Preferences::setDiskUsage($diskUsage);
+        Application_Model_Preference::setDiskUsage($diskUsage);
 
         //update system_version in cc_pref and change some columns in cc_files
         parent::_runUpgrade();
@@ -400,7 +400,7 @@ class AirtimeUpgrader2511 extends AirtimeUpgrader
             ->withColumn('SUM(CcFiles.filesize)', 'disk_usage')
             ->find();
         $disk_usage = $queryResult[0];
-        Application_Model_Preferences::setDiskUsage($disk_usage);
+        Application_Model_Preference::setDiskUsage($disk_usage);
     }
 }
 

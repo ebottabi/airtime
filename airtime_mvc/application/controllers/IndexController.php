@@ -17,12 +17,12 @@ class IndexController extends Zend_Controller_Action
 
         $this->_helper->layout->setLayout('radio-page');
 
-        $this->view->stationLogo = Application_Model_Preferences::GetStationLogo();
+        $this->view->stationLogo = Application_Model_Preference::GetStationLogo();
 
-        $stationName = Application_Model_Preferences::GetStationName();
+        $stationName = Application_Model_Preference::GetStationName();
         $this->view->stationName = $stationName;
 
-        $stationDescription = Application_Model_Preferences::GetStationDescription();
+        $stationDescription = Application_Model_Preference::GetStationDescription();
         $this->view->stationDescription = $stationDescription;
 
         $this->view->stationUrl = Application_Common_HTTPHelper::getStationUrl();

@@ -216,9 +216,9 @@ class Application_Model_SystemStatus
         $partitions = array();
 
         //connect to DB and find how much total space user has allocated.
-        $totalSpace = Application_Model_Preferences::GetDiskQuota();
+        $totalSpace = Application_Model_Preference::GetDiskQuota();
 
-        $usedSpace = Application_Model_Preferences::getDiskUsage();
+        $usedSpace = Application_Model_Preference::getDiskUsage();
         if (empty($usedSpace)) {
             $usedSpace = 0;
         }

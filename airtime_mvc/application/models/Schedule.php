@@ -325,8 +325,8 @@ SQL;
      * @return string the source name
      */
     private static function _getSource() {
-        $live_dj = Application_Model_Preferences::GetSourceStatus("live_dj");
-        $master_dj = Application_Model_Preferences::GetSourceStatus("master_dj");
+        $live_dj = Application_Model_Preference::GetSourceStatus("live_dj");
+        $master_dj = Application_Model_Preference::GetSourceStatus("master_dj");
         $source = ($master_dj ? self::MASTER_SOURCE_NAME
                               : ($live_dj ? self::SHOW_SOURCE_NAME : self::SCHEDULED_SOURCE_NAME));
         return $source;
@@ -583,9 +583,9 @@ SQL;
                 ." SET media_item_played=TRUE";
         // we need to update 'broadcasted' column as well
         // check the current switch status
-        $live_dj        = Application_Model_Preferences::GetSourceSwitchStatus('live_dj')        == 'on';
-        $master_dj      = Application_Model_Preferences::GetSourceSwitchStatus('master_dj')      == 'on';
-        $scheduled_play = Application_Model_Preferences::GetSourceSwitchStatus('scheduled_play') == 'on';
+        $live_dj        = Application_Model_Preference::GetSourceSwitchStatus('live_dj')        == 'on';
+        $master_dj      = Application_Model_Preference::GetSourceSwitchStatus('master_dj')      == 'on';
+        $scheduled_play = Application_Model_Preference::GetSourceSwitchStatus('scheduled_play') == 'on';
 
         if (!$live_dj && !$master_dj && $scheduled_play) {
             $sql .= ", broadcasted=1";
@@ -808,7 +808,7 @@ SQL;
         $kick_times = Application_Model_ShowInstance::GetEndTimeOfNextShowWithLiveDJ($range_start, $range_end);
         foreach ($kick_times as $kick_time_info) {
             $kick_time = $kick_time_info['ends'];
-            $temp = explode('.', Application_Model_Preferences::GetDefaultTransitionFade());
+            $temp = explode('.', Application_Model_Preference::GetDefaultTransitionFade());
             // we round down transition time since PHP cannot handle millisecond. We need to
             // handle this better in the future
             $transition_time   = intval($temp[0]);
@@ -859,9 +859,9 @@ SQL;
         $independent_event = !$same_hour;
 
         $replay_gain = is_null($item["replay_gain"]) ? "0": $item["replay_gain"];
-        $replay_gain += Application_Model_Preferences::getReplayGainModifier();
+        $replay_gain += Application_Model_Preference::getReplayGainModifier();
 
-        if (!Application_Model_Preferences::GetEnableReplayGain() ) {
+        if (!Application_Model_Preference::GetEnableReplayGain() ) {
             $replay_gain = 0;
         }
 

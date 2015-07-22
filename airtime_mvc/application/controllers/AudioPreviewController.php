@@ -36,7 +36,7 @@ class AudioPreviewController extends Zend_Controller_Action
             $baseUrl.'js/jplayer/skin/jplayer.airtime.audio.preview.css?'.$CC_CONFIG['airtime_version']);
         $this->_helper->layout->setLayout('audioPlayer');
 
-        $logo = Application_Model_Preferences::GetStationLogo();
+        $logo = Application_Model_Preference::GetStationLogo();
         if ($logo) {
             $this->view->logo = "data:image/png;base64,$logo";
         } else {
@@ -87,7 +87,7 @@ class AudioPreviewController extends Zend_Controller_Action
         $this->view->headLink()->appendStylesheet($baseUrl.'js/jplayer/skin/jplayer.airtime.audio.preview.css?'.$CC_CONFIG['airtime_version']);
         $this->_helper->layout->setLayout('audioPlayer');
 
-        $logo = Application_Model_Preferences::GetStationLogo();
+        $logo = Application_Model_Preference::GetStationLogo();
         if ($logo) {
             $this->view->logo = "data:image/png;base64,$logo";
         } else {
@@ -113,7 +113,7 @@ class AudioPreviewController extends Zend_Controller_Action
         $this->view->headLink()->appendStylesheet($baseUrl.'js/jplayer/skin/jplayer.airtime.audio.preview.css?'.$CC_CONFIG['airtime_version']);
         $this->_helper->layout->setLayout('audioPlayer');
 
-        $logo = Application_Model_Preferences::GetStationLogo();
+        $logo = Application_Model_Preference::GetStationLogo();
         if ($logo) {
             $this->view->logo = "data:image/png;base64,$logo";
         } else {
@@ -231,7 +231,7 @@ class AudioPreviewController extends Zend_Controller_Action
         $this->view->headLink()->appendStylesheet($baseUrl.'js/jplayer/skin/jplayer.airtime.audio.preview.css?'.$CC_CONFIG['airtime_version']);
         $this->_helper->layout->setLayout('audioPlayer');
 
-        $logo = Application_Model_Preferences::GetStationLogo();
+        $logo = Application_Model_Preference::GetStationLogo();
         if ($logo) {
             $this->view->logo = "data:image/png;base64,$logo";
         } else {

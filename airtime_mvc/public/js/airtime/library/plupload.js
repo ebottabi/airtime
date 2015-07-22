@@ -104,7 +104,7 @@ $(document).ready(function() {
             "bJQueryUI": true,
 			"bProcessing": false,
 			"bServerSide": true,
-			"sAjaxSource": '/Plupload/recent-uploads/format/json',
+			"sAjaxSource": '/add-media/recent-uploads/format/json',
 			"sAjaxDataProp": 'files',
 			"bSearchable": false,
 			"bInfo": true,

@@ -293,7 +293,7 @@ class Application_Model_Streams
     {
         $con = Propel::getConnection();
 
-        $update_time = Application_Model_Preferences::GetStreamUpdateTimestemp();
+        $update_time = Application_Model_Preference::GetStreamUpdateTimestemp();
         
         if ($boot_time == null || $boot_time > $update_time) {
             $keyname = "s".$stream_id."_liquidsoap_error";

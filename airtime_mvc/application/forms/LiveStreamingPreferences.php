@@ -7,9 +7,9 @@ class Application_Form_LiveStreamingPreferences extends Zend_Form_SubForm
     {
         $CC_CONFIG = Config::getConfig();
         $isDemo = isset($CC_CONFIG['demo']) && $CC_CONFIG['demo'] == 1;
-        $isStreamConfigable = Application_Model_Preferences::GetEnableStreamConf() == "true";
+        $isStreamConfigable = Application_Model_Preference::GetEnableStreamConf() == "true";
 
-        $defaultFade = Application_Model_Preferences::GetDefaultTransitionFade();
+        $defaultFade = Application_Model_Preference::GetDefaultTransitionFade();
 
         $this->setDecorators(array(
                                  array('ViewScript', array('viewScript' => 'form/preferences_livestream.phtml')),

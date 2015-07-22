@@ -18,9 +18,9 @@ $pages = array(
     array(
         'label'      => _('Add Media'),
         'module'     => 'default',
-        'controller' => 'plupload',
+        'controller' => 'add-media',
         'action'     => 'index',
-        'resource'   => 'plupload'
+        'resource'   => 'add-media'
     ),
     array(
         'label'      => _('Library'),

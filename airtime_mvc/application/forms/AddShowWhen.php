@@ -97,7 +97,7 @@ class Application_Form_AddShowWhen extends Zend_Form_SubForm
         $timezone->setRequired(true)
                  ->setLabel(_("Timezone:"))
                  ->setMultiOptions(Application_Common_Timezone::getTimezones())
-                 ->setValue(Application_Model_Preferences::GetUserTimezone())
+                 ->setValue(Application_Model_Preference::GetUserTimezone())
                  ->setAttrib('class', 'input_select add_show_input_select')
                  ->setDecorators(array('ViewHelper'));
         $this->addElement($timezone);
@@ -200,11 +200,11 @@ class Application_Form_AddShowWhen extends Zend_Form_SubForm
 
                 //get repeating show end date
                 if ($formData["add_show_no_end"]) {
-                    $date = Application_Model_Preferences::GetShowsPopulatedUntil();
+                    $date = Application_Model_Preference::GetShowsPopulatedUntil();
 
                     if (is_null($date)) {
                         $populateUntilDateTime = new DateTime("now", $utc);
-                        Application_Model_Preferences::SetShowsPopulatedUntil($populateUntilDateTime);
+                        Application_Model_Preference::SetShowsPopulatedUntil($populateUntilDateTime);
                     } else {
                         $populateUntilDateTime = clone $date;
                     }

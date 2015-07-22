@@ -29,11 +29,11 @@ class Application_Common_UsabilityHints
             // so we can ignore leading or trailing slashes, special characters like '#',
             // and additional controller action names like '/user/add-user'
 
-            if (strpos(strtolower($userPath), 'plupload') !== false) {
+            if (strpos(strtolower($userPath), 'add-media') !== false) {
                 $userIsOnAddMediaPage = true;
             }
 
-            if (strpos(strtolower($userPath), 'schedule') !== false) {
+            if (strpos(strtolower($userPath), 'calendar') !== false) {
                 $userIsOnCalendarPage = true;
             }
         } else {
@@ -41,11 +41,11 @@ class Application_Common_UsabilityHints
             // we can use Zend's Front Controller to get the user's current location.
             $currentController = strtolower(Zend_Controller_Front::getInstance()->getRequest()->getControllerName());
 
-            if ($currentController == "schedule") {
+            if ($currentController == "calendar") {
                 $userIsOnCalendarPage = true;
             }
 
-            if ($currentController == "plupload") {
+            if ($currentController == "add-media") {
                 $userIsOnAddMediaPage = true;
             }
         }
@@ -55,7 +55,7 @@ class Application_Common_UsabilityHints
                 return _("Click the 'Add files' button and select files from your computer to upload.");
             } else {
                 return sprintf(_("It looks like you have not uploaded any audio files yet. %sUpload a file now.%s "),
-                    "<a href=\"/plupload\">",
+                    "<a href=\"/add-media\">",
                     "</a>");
             }
         } else if (!self::isFutureOrCurrentShowScheduled()) {
@@ -63,7 +63,7 @@ class Application_Common_UsabilityHints
                 return _("Click the 'Create New Show' button and fill out the required fields.");
             } else {
                 return sprintf(_("It looks like you don't have any shows scheduled. %sCreate a show now.%s"),
-                    "<a href=\"/schedule\">",
+                    "<a href=\"/calendar\">",
                     "</a>");
             }
         } else if (self::isCurrentShowEmpty()) {
@@ -71,7 +71,7 @@ class Application_Common_UsabilityHints
                 return _("To start broadcasting, click on the current show and select 'Add / Remove Content'");
             } else {
                 return sprintf(_("It looks like the current show needs more tracks. %sAdd tracks to your show now.%s"),
-                    "<a href=\"/schedule\">",
+                    "<a href=\"/calendar\">",
                     "</a>");
             }
         } else if (!self::getCurrentShow() && self::isNextShowEmpty()) {
@@ -79,7 +79,7 @@ class Application_Common_UsabilityHints
                 return _("Click on the show starting next and select 'Add / Remove Content'");
             } else {
                 return sprintf(_("It looks like the next show is empty. %sAdd tracks to your show now.%s"),
-                    "<a href=\"/schedule\">",
+                    "<a href=\"/calendar\">",
                     "</a>");
             }
         } else {

@@ -1766,11 +1766,11 @@ SQL;
      */
     private static function getPopulateShowUntilDateTIme()
     {
-        $populateUntil = Application_Model_Preferences::GetShowsPopulatedUntil();
+        $populateUntil = Application_Model_Preference::GetShowsPopulatedUntil();
 
         if (is_null($populateUntil)) {
             $populateUntil = new DateTime("now", new DateTimeZone('UTC'));
-            Application_Model_Preferences::SetShowsPopulatedUntil($populateUntil);
+            Application_Model_Preference::SetShowsPopulatedUntil($populateUntil);
         }
         return $populateUntil;
     }

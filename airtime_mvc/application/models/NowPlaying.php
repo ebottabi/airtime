@@ -56,7 +56,7 @@ class Application_Model_NowPlaying
     {
         $this->startDT = $p_startDT;
         $this->endDT = $p_endDT;
-        $this->timezone = Application_Model_Preferences::GetUserTimezone();
+        $this->timezone = Application_Model_Preference::GetUserTimezone();
         $this->user = Application_Model_User::getCurrentUser();
         $this->opts = $p_opts;
         $this->epoch_now = floatval(microtime(true));

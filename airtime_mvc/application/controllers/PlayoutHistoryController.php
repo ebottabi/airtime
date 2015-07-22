@@ -26,7 +26,7 @@ class PlayoutHistoryController extends Zend_Controller_Action
 
         list($startsDT, $endsDT) = Application_Common_HTTPHelper::getStartEndFromRequest($this->getRequest());
        
-        $userTimezone = new DateTimeZone(Application_Model_Preferences::GetUserTimezone());
+        $userTimezone = new DateTimeZone(Application_Model_Preference::GetUserTimezone());
         $startsDT->setTimezone($userTimezone);
         $endsDT->setTimezone($userTimezone);
 

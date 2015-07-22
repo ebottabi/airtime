@@ -204,7 +204,7 @@ class CcFiles extends BaseCcFiles {
                 $cloudFile->setCcFiles($file);
                 $cloudFile->save();
 
-                Application_Model_Preferences::updateDiskUsage($fileSizeBytes);
+                Application_Model_Preference::updateDiskUsage($fileSizeBytes);
             } else if ($file) {
 
                 // Since we check for this value when deleting files, set it first
@@ -220,7 +220,7 @@ class CcFiles extends BaseCcFiles {
                     if (!isset($fileSizeBytes) || $fileSizeBytes === false) {
                         throw new FileNotFoundException("Invalid filesize for $fileId");
                     }
-                    Application_Model_Preferences::updateDiskUsage($fileSizeBytes);
+                    Application_Model_Preference::updateDiskUsage($fileSizeBytes);
 
                     $fullPath = $fileArray["full_path"];
                     $storDir = Application_Model_MusicDir::getStorDir()->getDirectory();

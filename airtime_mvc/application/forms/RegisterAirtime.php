@@ -10,10 +10,10 @@ class Application_Form_RegisterAirtime extends Zend_Form
         $this->setAction(Application_Common_OsPath::getBaseDir().'now-playing');
         $this->setMethod('post');
 
-        $country_list = Application_Model_Preferences::GetCountryList();
+        $country_list = Application_Model_Preference::GetCountryList();
 
         $privacyChecked = false;
-        if (Application_Model_Preferences::GetPrivacyPolicyCheck() == 1) {
+        if (Application_Model_Preference::GetPrivacyPolicyCheck() == 1) {
             $privacyChecked = true;
         }
 
@@ -29,7 +29,7 @@ class Application_Form_RegisterAirtime extends Zend_Form
         $stnName = new Zend_Form_Element_Text("stnName");
         $stnName->setLabel(_("Station Name"))
                 ->setRequired(true)
-                ->setValue(Application_Model_Preferences::GetStationName())
+                ->setValue(Application_Model_Preference::GetStationName())
                 ->setDecorators(array('ViewHelper'));
         $this->addElement($stnName);
 
@@ -39,7 +39,7 @@ class Application_Form_RegisterAirtime extends Zend_Form
             'label'      => _('Phone:'),
             'required'   => false,
             'filters'    => array('StringTrim'),
-            'value'      => Application_Model_Preferences::GetPhone(),
+            'value'      => Application_Model_Preference::GetPhone(),
             'decorators' => array(
                 'ViewHelper'
             )
@@ -51,7 +51,7 @@ class Application_Form_RegisterAirtime extends Zend_Form
             'label'      => _('Email:'),
             'required'   => false,
             'filters'    => array('StringTrim'),
-            'value'      => Application_Model_Preferences::GetEmail(),
+            'value'      => Application_Model_Preference::GetEmail(),
             'decorators' => array(
                 'ViewHelper'
             )
@@ -62,7 +62,7 @@ class Application_Form_RegisterAirtime extends Zend_Form
             'label'      => _('Station Web Site:'),
             'required'   => false,
             'class'      => 'input_text',
-            'value' => Application_Model_Preferences::GetStationWebSite(),
+            'value' => Application_Model_Preference::GetStationWebSite(),
             'decorators' => array(
                 'ViewHelper'
             )
@@ -72,7 +72,7 @@ class Application_Form_RegisterAirtime extends Zend_Form
         $this->addElement('select', 'Country', array(
             'label'        => _('Country:'),
             'required'     => false,
-            'value'        => Application_Model_Preferences::GetStationCountry(),
+            'value'        => Application_Model_Preference::GetStationCountry(),
             'multiOptions' => $country_list,
             'decorators'   => array(
                 'ViewHelper'
@@ -84,7 +84,7 @@ class Application_Form_RegisterAirtime extends Zend_Form
             'label'      => _('City:'),
             'required'   => false,
             'class'      => 'input_text',
-            'value' => Application_Model_Preferences::GetStationCity(),
+            'value' => Application_Model_Preference::GetStationCity(),
             'decorators' => array(
                 'ViewHelper'
             )
@@ -95,7 +95,7 @@ class Application_Form_RegisterAirtime extends Zend_Form
         $description->class = 'input_text_area';
         $description->setLabel(_('Station Description:'))
                     ->setRequired(false)
-                    ->setValue(Application_Model_Preferences::GetStationDescription())
+                    ->setValue(Application_Model_Preference::GetStationDescription())
                     ->setDecorators(array('ViewHelper'))
                     ->setAttrib('ROWS','2')
                     ->setAttrib('COLS','58');
@@ -126,7 +126,7 @@ class Application_Form_RegisterAirtime extends Zend_Form
         $checkboxPublicise->setLabel(sprintf(_('Promote my station on %s'), COMPANY_SITE))
                           ->setRequired(false)
                           ->setDecorators(array('ViewHelper'))
-                          ->setValue(Application_Model_Preferences::GetPublicise());
+                          ->setValue(Application_Model_Preference::GetPublicise());
         $this->addElement($checkboxPublicise);
 
         // text area for sending detail
@@ -137,7 +137,7 @@ class Application_Form_RegisterAirtime extends Zend_Form
             'readonly'   => true,
             'rows'       => 5,
             'cols'       => 61,
-            'value'  => Application_Model_Preferences::GetSystemInfo(false, true),
+            'value'  => Application_Model_Preference::GetSystemInfo(false, true),
             'decorators' => array(
                 'ViewHelper'
             )

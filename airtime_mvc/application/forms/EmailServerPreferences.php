@@ -14,7 +14,7 @@ class Application_Form_EmailServerPreferences extends Zend_Form_SubForm
         $this->addElement('checkbox', 'enableSystemEmail', array(
             'label' => _('Enable System Emails (Password Reset)'),
             'required' => false,
-            'value' => Application_Model_Preferences::GetEnableSystemEmail(),
+            'value' => Application_Model_Preference::GetEnableSystemEmail(),
             'decorators' => array(
                 'ViewHelper'
             )
@@ -23,7 +23,7 @@ class Application_Form_EmailServerPreferences extends Zend_Form_SubForm
         $this->addElement('text', 'systemEmail', array(
             'class' => 'input_text',
             'label' => _("Reset Password 'From' Email"),
-            'value' => Application_Model_Preferences::GetSystemEmail(),
+            'value' => Application_Model_Preference::GetSystemEmail(),
             'readonly' => true,
             'decorators' => array('viewHelper')
         ));
@@ -31,7 +31,7 @@ class Application_Form_EmailServerPreferences extends Zend_Form_SubForm
         $this->addElement('checkbox', 'configureMailServer', array(
             'label' => _('Configure Mail Server'),
             'required' => false,
-            'value' => Application_Model_Preferences::GetMailServerConfigured(),
+            'value' => Application_Model_Preference::GetMailServerConfigured(),
             'decorators' => array (
                 'viewHelper'
             )
@@ -40,7 +40,7 @@ class Application_Form_EmailServerPreferences extends Zend_Form_SubForm
         $this->addElement('checkbox', 'msRequiresAuth', array(
             'label' => _('Requires Authentication'),
             'required' => false,
-            'value' => Application_Model_Preferences::GetMailServerRequiresAuth(),
+            'value' => Application_Model_Preference::GetMailServerRequiresAuth(),
             'decorators' => array(
                 'viewHelper'
             )
@@ -49,7 +49,7 @@ class Application_Form_EmailServerPreferences extends Zend_Form_SubForm
         $this->addElement('text', 'mailServer', array(
             'class' => 'input_text',
             'label' => _('Mail Server'),
-            'value' => Application_Model_Preferences::GetMailServer(),
+            'value' => Application_Model_Preference::GetMailServer(),
             'readonly' => true,
             'decorators' => array('viewHelper'),
             'allowEmpty' => false,
@@ -63,7 +63,7 @@ class Application_Form_EmailServerPreferences extends Zend_Form_SubForm
         $this->addElement('text', 'email', array(
             'class' => 'input_text',
             'label' => _('Email Address'),
-            'value' => Application_Model_Preferences::GetMailServerEmailAddress(),
+            'value' => Application_Model_Preference::GetMailServerEmailAddress(),
             'readonly' => true,
             'decorators' => array('viewHelper'),
             'allowEmpty' => false,
@@ -78,7 +78,7 @@ class Application_Form_EmailServerPreferences extends Zend_Form_SubForm
         $this->addElement('password', 'ms_password', array(
             'class' => 'input_text',
             'label' => _('Password'),
-            'value' => Application_Model_Preferences::GetMailServerPassword(),
+            'value' => Application_Model_Preference::GetMailServerPassword(),
             'readonly' => true,
             'decorators' => array('viewHelper'),
             'allowEmpty' => false,
@@ -94,7 +94,7 @@ class Application_Form_EmailServerPreferences extends Zend_Form_SubForm
         $port = new Zend_Form_Element_Text('port');
         $port->class = 'input_text';
         $port->setRequired(false)
-            ->setValue(Application_Model_Preferences::GetMailServerPort())
+            ->setValue(Application_Model_Preference::GetMailServerPort())
             ->setLabel(_('Port'))
             ->setAttrib('readonly', true)
             ->setDecorators(array('viewHelper'));

@@ -42,7 +42,7 @@ class Application_Form_StreamsSubForm extends Zend_Form_SubForm
         $this->setIsArray(true);
         $this->setElementsBelongTo($prefix."_data");
 
-        $disable_all = Application_Model_Preferences::GetEnableStreamConf() == "false";
+        $disable_all = Application_Model_Preference::GetEnableStreamConf() == "false";
 
         $enable = new Zend_Form_Element_Checkbox('enable');
         $enable->setLabel(_('Enabled:'))
