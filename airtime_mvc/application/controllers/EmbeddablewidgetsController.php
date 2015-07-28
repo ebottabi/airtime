@@ -14,6 +14,7 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
         $baseUrl = Application_Common_OsPath::getBaseDir();
         $this->view->headLink()->appendStylesheet($baseUrl.'css/player-form.css?'.$CC_CONFIG['airtime_version']);
         $this->view->headScript()->appendFile($baseUrl.'js/airtime/player/player.js?'.$CC_CONFIG['airtime_version']);
+        $this->view->headScript()->appendFile($baseUrl.'js/airtime/embeddablewidgets/facebook-app.js?'.$CC_CONFIG['airtime_version']);
 
         $form = new Application_Form_Player();
 
