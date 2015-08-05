@@ -1,3 +1,73 @@
+<div id="fb-root"></div>
+
+<script>
+
+    $(document).ready(function() {
+        $("#facebook-login").click(function() {
+            console.log("hello");
+            loginFacebook();
+        });
+    });
+
+
+        window.fbAsyncInit = function() {
+        FB.init({
+            appId      : '1667975616771598',
+            xfbml      : true,
+            version    : 'v2.4'
+        });
+        };
+
+        (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+
+    function loginFacebook() {
+        console.log("hello");
+        FB.login(function(response) {
+            if (response.authResponse)
+            {
+                //getUserInfo(); // Get User Information.
+                console.log("success");
+                console.log(response);
+
+            } else
+            {
+                console.log('Authorization failed.');
+            }
+        },{scope: 'manage_pages'});
+    }
+
+</script>
+
+<script type="text/javascript">
+    /*$.ajax({
+        type: "GET",
+        dataType: "jsonp",
+        crossDomain: true,
+        headers: {
+            "Accept" : "application/json; charset=utf-8",
+            "Content-Type": "application/javascript; charset=utf-8",
+            "Access-Control-Allow-Origin" : "*"
+        },
+        url: "https://www.facebook.com/dialog/oauth?client_id=1667975616771598&redirect_url=http://localhost/embeddablewidgets&scope=manage_pages%2Cpublish_stream&state=success",
+        success: function (data) {
+            console.log("hello");
+            console.log(data);
+        },
+        error: function(data) {
+            console.log("error");
+            console.log(data);
+        }
+    });*/
+</script>
+
+<div><a id="facebook-login" href="#">Click Me</a></div>
+
 <div id="widget-menu" class="ui-widget ui-widget-content block-shadow simple-formblock clearfix padded-strong ">
     <h2><?php echo _("Embeddable Widgets"); ?></h2>
     <a href="#player-widget">Player</a>
