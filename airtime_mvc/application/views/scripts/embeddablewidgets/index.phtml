@@ -32,14 +32,27 @@
             if (response.authResponse)
             {
                 //getUserInfo(); // Get User Information.
-                console.log("success");
-                console.log(response);
+                getPageAccessToken(response.authResponse.userID, response.authResponse.accessToken);
 
             } else
             {
                 console.log('Authorization failed.');
             }
         },{scope: 'manage_pages'});
+    }
+
+    function getPageAccessToken(userId, accessToken) {
+        console.log(userId);
+        console.log(accessToken);
+        FB.api('/'+userId+'/accounts', function(response) {
+            console.log(response);
+            //response.name       - User Full name
+            //response.link       - User Facebook URL
+            //response.username   - User name
+            //response.id         - id
+            //response.email      - User email
+
+        }, {access_token: accessToken});
     }
 
 </script>
