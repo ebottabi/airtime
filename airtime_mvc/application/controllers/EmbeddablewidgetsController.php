@@ -33,6 +33,8 @@ class EmbeddableWidgetsController extends Zend_Controller_Action
             $this->view->weekly_schedule_error_msg = _("To use the embeddable weekly schedule widget you must:<br><br>
             Enable the Public Airtime API under System -> Preferences");
         }
+
+        $this->view->facebook_app_id = $_SERVER["FACEBOOK_APP_ID"];
     }
 }
 

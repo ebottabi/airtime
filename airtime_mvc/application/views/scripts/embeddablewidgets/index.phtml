@@ -4,7 +4,6 @@
 
     $(document).ready(function() {
         $("#facebook-login").click(function() {
-            console.log("hello");
             loginFacebook();
         });
     });
@@ -27,12 +26,11 @@
         }(document, 'script', 'facebook-jssdk'));
 
     function loginFacebook() {
-        console.log("hello");
         FB.login(function(response) {
             if (response.authResponse)
             {
-                //getUserInfo(); // Get User Information.
-                getPageAccessToken(response.authResponse.userID, response.authResponse.accessToken);
+                getPagesOwnedByUser(response.authResponse.userID, response.authResponse.accessToken);
+                addPageTab();
 
             } else
             {
@@ -41,42 +39,18 @@
         },{scope: 'manage_pages'});
     }
 
-    function getPageAccessToken(userId, accessToken) {
-        console.log(userId);
-        console.log(accessToken);
+    function getPagesOwnedByUser(userId, accessToken) {
         FB.api('/'+userId+'/accounts', function(response) {
             console.log(response);
-            //response.name       - User Full name
-            //response.link       - User Facebook URL
-            //response.username   - User name
-            //response.id         - id
-            //response.email      - User email
-
         }, {access_token: accessToken});
     }
 
-</script>
+    function addPageTab() {
+        FB.ui({
+            method: 'pagetab'
+        }, function(resp){}, {app_id: <?php echo $this->facebook_app_id; ?>, redirect_uri: 'https://localhost'});
+    }
 
-<script type="text/javascript">
-    /*$.ajax({
-        type: "GET",
-        dataType: "jsonp",
-        crossDomain: true,
-        headers: {
-            "Accept" : "application/json; charset=utf-8",
-            "Content-Type": "application/javascript; charset=utf-8",
-            "Access-Control-Allow-Origin" : "*"
-        },
-        url: "https://www.facebook.com/dialog/oauth?client_id=1667975616771598&redirect_url=http://localhost/embeddablewidgets&scope=manage_pages%2Cpublish_stream&state=success",
-        success: function (data) {
-            console.log("hello");
-            console.log(data);
-        },
-        error: function(data) {
-            console.log("error");
-            console.log(data);
-        }
-    });*/
 </script>
 
 <div><a id="facebook-login" href="#">Click Me</a></div>

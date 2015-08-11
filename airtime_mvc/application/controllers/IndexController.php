@@ -17,6 +17,34 @@ class IndexController extends Zend_Controller_Action
 
         $this->_helper->layout->setLayout('radio-page');
 
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+            $params = $request->getParams();
+            Logging::info($params);
+
+            $signed_request = $params["signed_request"];
+            list($encoded_sig, $payload) = explode('.', $signed_request, 2);
+
+            $secret = $_SERVER["FACEBOOK_APP_SECRET"];
+
+            // decode the data
+            $sig = $this->base64_url_decode($encoded_sig);
+            $data = json_decode($this->base64_url_decode($payload), true);
+
+            // confirm the signature
+            $expected_sig = hash_hmac('sha256', $payload, $secret, $raw = true);
+            if ($sig !== $expected_sig) {
+                error_log('Bad Signed JSON signature!');
+                return null;
+            }
+
+            Logging::info($data);
+
+            //TODO: check page id and redirect to corresponding station's radio page
+
+
+        }
+
         $this->view->stationLogo = Application_Model_Preference::GetStationLogo();
 
         $stationName = Application_Model_Preference::GetStationName();
@@ -33,6 +61,10 @@ class IndexController extends Zend_Controller_Action
         }
         $this->view->displayLoginButton = $displayRadioPageLoginButtonValue;
 
+    }
+
+    public function base64_url_decode($input) {
+        return base64_decode(strtr($input, '-_', '+/'));
     }
 
     public function mainAction()
