@@ -2,6 +2,12 @@
 
 class Application_Model_Schedule
 {
+
+    const MASTER_SOURCE_NAME = "Master";
+    const SHOW_SOURCE_NAME = "Live";
+    const SCHEDULED_SOURCE_NAME = "Scheduled";
+    const LIVE_STREAM = "Live Stream";
+
     /**
      * Return TRUE if file is going to be played in the future.
      *
@@ -56,6 +62,29 @@ SQL;
 
         return $real_streams;
     }
+
+    /**
+     * Returns an array with 2 elements: artist and title name of the track that is currently playing.
+     * Elements will be set to null if metadata is not set for those fields.
+     *
+     * Returns null if no track is currently playing.
+     *
+     * Data is based on GetPlayOrderRange() in this class.
+     */
+    public static function getCurrentPlayingTrack()
+    {
+        $currentScheduleInfo = self::GetPlayOrderRange();
+        if (empty($currentScheduleInfo["tracks"]["current"])) {
+            return null;
+        }
+
+        $currentTrackArray = explode(" - ", $currentScheduleInfo["tracks"]["current"]["name"]);
+        $currentTrackMetadata = array(
+            "artist" => empty($currentTrackArray[0]) ? null : urlencode($currentTrackArray[0]),
+            "title" => empty($currentTrackArray[1]) ? null : urlencode($currentTrackArray[1])
+        );
+        return $currentTrackMetadata;
+    }
     
     /**
      * Returns data related to the scheduled items.
@@ -64,33 +93,26 @@ SQL;
     {
         //Everything in this function must be done in UTC. You will get a swift kick in the pants if you mess that up.
 
-        if (!is_int($p_prev) || !is_int($p_next)) {
-            //must enter integers to specify ranges
-            Logging::info("Invalid range parameters: $p_prev or $p_next");
-
-            return array();
-        }
-
         // when timeEnd is unspecified, return to the default behaviour - set a range of 48 hours from current time
         if (!$utcTimeEnd) {
             $end = new DateTime();
             $end->add(new DateInterval("P2D")); // Add 2 days
             $end->setTimezone(new DateTimeZone("UTC"));
-            $utcTimeEnd = $end->format("Y-m-d H:i:s");
+            $utcTimeEnd = $end->format(DEFAULT_TIMESTAMP_FORMAT);
         }
 
         $utcNow = new DateTime("now", new DateTimeZone("UTC"));
 
         $shows = Application_Model_Show::getPrevCurrentNext($utcNow, $utcTimeEnd, $showsToRetrieve);
-        $previousShowID = count($shows['previousShow'])>0?$shows['previousShow'][0]['instance_id']:null;
         $currentShowID = count($shows['currentShow'])>0?$shows['currentShow']['instance_id']:null;
-        $nextShowID = count($shows['nextShow'])>0?$shows['nextShow'][0]['instance_id']:null;
-        $results = self::GetPrevCurrentNext($previousShowID, $currentShowID, $nextShowID, $utcNow);
+        $source = self::_getSource();
+        $results = Application_Model_Schedule::getPreviousCurrentNextMedia($utcNow, $currentShowID, self::_getSource());
 
         $range = array(
             "station" => array (
                 "env"           => APPLICATION_ENV,
-                "schedulerTime" => $utcNow->format("Y-m-d H:i:s")
+                "schedulerTime" => $utcNow->format(DEFAULT_TIMESTAMP_FORMAT),
+                "source_enabled" => $source
             ),
             //Previous, current, next songs!
             "tracks" => array(
@@ -120,150 +142,197 @@ SQL;
         $utcNow = new DateTime("now", new DateTimeZone("UTC"));
     
         $shows = Application_Model_Show::getPrevCurrentNextOld($utcNow);
-        $previousShowID = count($shows['previousShow'])>0?$shows['previousShow'][0]['instance_id']:null;
         $currentShowID = count($shows['currentShow'])>0?$shows['currentShow'][0]['instance_id']:null;
-        $nextShowID = count($shows['nextShow'])>0?$shows['nextShow'][0]['instance_id']:null;
-        $results = self::GetPrevCurrentNext($previousShowID, $currentShowID, $nextShowID, $utcNow);
-    
+        $source = self::_getSource();
+        $results = Application_Model_Schedule::getPreviousCurrentNextMedia($utcNow, $currentShowID, $source);
+
         $range = array(
                 "env" => APPLICATION_ENV,
-                "schedulerTime" => $utcNow->format("Y-m-d H:i:s"),
+                "schedulerTime" => $utcNow->format(DEFAULT_TIMESTAMP_FORMAT),
                 //Previous, current, next songs!
                 "previous"=>$results['previous'] !=null?$results['previous']:(count($shows['previousShow'])>0?$shows['previousShow'][0]:null),
                 "current"=>$results['current'] !=null?$results['current']:((count($shows['currentShow'])>0 && $shows['currentShow'][0]['record'] == 1)?$shows['currentShow'][0]:null),
                 "next"=> $results['next'] !=null?$results['next']:(count($shows['nextShow'])>0?$shows['nextShow'][0]:null),
                 //Current and next shows
                 "currentShow"=>$shows['currentShow'],
-                "nextShow"=>$shows['nextShow']
+                "nextShow"=>$shows['nextShow'],
+                "source_enabled" => $source
         );
     
         return $range;
     }
 
     /**
-     * Queries the database for the set of schedules one hour before
-     * and after the given time. If a show starts and ends within that
-     * time that is considered the current show. Then the scheduled item
-     * before it is the previous show, and the scheduled item after it
-     * is the next show. This way the dashboard getCurrentPlaylist is
-     * very fast. But if any one of the three show types are not found
-     * through this mechanism a call is made to the old way of querying
-     * the database to find the track info.
-    **/
-    public static function GetPrevCurrentNext($p_previousShowID, $p_currentShowID, $p_nextShowID, $utcNow)
+     * Attempts to find a media item (track or webstream) that is currently playing.
+     * If a current media item is currently playing, this function then attempts to
+     * find an item that played previously and is scheduled to play next.
+     *
+     * @param $utcNow                   DateTime current time in UTC
+     * @param $currentShowInstanceId    int      id of the show instance currently playing
+     * @param $source                   string   the current prioritized source
+     * @return array with data about the previous, current, and next media items playing.
+     *      Returns an empty arrays if there is no media item currently playing
+     */
+    public static function getPreviousCurrentNextMedia($utcNow, $currentShowInstanceId, $source)
     {
         $timeZone = new DateTimeZone("UTC"); //This function works entirely in UTC.
         assert(get_class($utcNow) === "DateTime");
         assert($utcNow->getTimeZone() == $timeZone);
 
-        if ($p_previousShowID == null && $p_currentShowID == null && $p_nextShowID == null) {
-            return;
-        }
-
-        $sql = "SELECT %%columns%% st.starts as starts, st.ends as ends,
-            st.media_item_played as media_item_played, si.ends as show_ends
-            %%tables%% WHERE ";
-
-        $fileColumns = "ft.artist_name, ft.track_title, ";
-        $fileJoin = "FROM cc_schedule st JOIN cc_files ft ON st.file_id = ft.id
-            LEFT JOIN cc_show_instances si ON st.instance_id = si.id";
-
-        $streamColumns = "ws.name AS artist_name, wm.liquidsoap_data AS track_title, ";
-        $streamJoin = <<<SQL
-FROM cc_schedule AS st
-JOIN cc_webstream ws ON st.stream_id = ws.id
-LEFT JOIN cc_show_instances AS si ON st.instance_id = si.id
-LEFT JOIN cc_subjs AS sub ON sub.id = ws.creator_id
-LEFT JOIN
-  (SELECT *
-   FROM cc_webstream_metadata
-   ORDER BY start_time DESC LIMIT 1) AS wm ON st.id = wm.instance_id
-SQL;
-
-        $predicateArr = array();
-        $paramMap = array();
-        if (isset($p_previousShowID)) {
-            $predicateArr[] = 'st.instance_id = :previousShowId';
-            $paramMap[':previousShowId'] = $p_previousShowID;
-        }
-        if (isset($p_currentShowID)) {
-            $predicateArr[] = 'st.instance_id = :currentShowId';
-            $paramMap[':currentShowId'] = $p_currentShowID;
-        }
-        if (isset($p_nextShowID)) {
-            $predicateArr[] = 'st.instance_id = :nextShowId';
-            $paramMap[':nextShowId'] = $p_nextShowID;
-        }
-
-        $sql .= " (".implode(" OR ", $predicateArr).") ";
-        $sql .= ' AND st.playout_status > 0 ORDER BY st.starts';
-
-        $filesSql = str_replace("%%columns%%", $fileColumns, $sql);
-        $filesSql = str_replace("%%tables%%", $fileJoin, $filesSql);
-
-        $streamSql = str_replace("%%columns%%", $streamColumns, $sql);
-        $streamSql = str_replace("%%tables%%", $streamJoin, $streamSql);
-
-        $sql = "SELECT * FROM (($filesSql) UNION ($streamSql)) AS unioned ORDER BY starts";
-
-        $rows = Application_Common_Database::prepareAndExecute($sql, $paramMap);
-        $numberOfRows = count($rows);
-
         $results['previous'] = null;
         $results['current']  = null;
         $results['next']     = null;
 
-        for ($i = 0; $i < $numberOfRows; ++$i) {
+        $sql = "select s.id, s.starts, s.ends, s.file_id, s.stream_id, s.media_item_played,
+                s.instance_id, si.ends as show_ends from cc_schedule s left join cc_show_instances si
+                on s.instance_id = si.id where s.playout_status > 0 and s.starts <= :p1
+                and s.ends >= :p2 and s.instance_id = :p3 order by starts desc limit 1";
 
-            // if the show is overbooked, then update the track end time to the end of the show time.
-            if ($rows[$i]['ends'] > $rows[$i]["show_ends"]) {
-                $rows[$i]['ends'] = $rows[$i]["show_ends"];
+        $params = array(
+            ":p1" => $utcNow->format(DEFAULT_TIMESTAMP_FORMAT),
+            ":p2" => $utcNow->format(DEFAULT_TIMESTAMP_FORMAT),
+            ":p3" => $currentShowInstanceId
+        );
+
+        $rows = Application_Common_Database::prepareAndExecute($sql, $params);
+
+        // If live streaming (master or show source) is enabled, set the current
+        // track information to the current show values
+        if ($source != self::SCHEDULED_SOURCE_NAME) {
+            $show = Application_Model_Show::getCurrentShow();
+            $results["current"] = isset($show[0]) ? array(
+                "starts"            => $show[0]["starts"],
+                "ends"              => $show[0]["ends"],
+                "type"              => _("livestream"),
+                "name"              => $show[0]["name"] . " - " . _(self::LIVE_STREAM),
+                "media_item_played" => false,
+                "record"            => "0"
+            ) : null;
+        } else if (count($rows) >= 1) {
+            $currentMedia = $rows[0];
+
+            if ($currentMedia["ends"] > $currentMedia["show_ends"]) {
+                $currentMedia["ends"] = $currentMedia["show_ends"];
             }
 
-            $curShowStartTime = new DateTime($rows[$i]['starts'], $timeZone);
-            $curShowEndTime   = new DateTime($rows[$i]['ends'], $timeZone);
-
-            if (($curShowStartTime <= $utcNow) && ($curShowEndTime >= $utcNow)) {
-                if ($i - 1 >= 0) {
-                    $results['previous'] = array("name"=>$rows[$i-1]["artist_name"]." - ".$rows[$i-1]["track_title"],
-                            "starts"=>$rows[$i-1]["starts"],
-                            "ends"=>$rows[$i-1]["ends"],
-                            "type"=>'track');
+            $currentMediaName = "";
+            $currentMediaFileId = $currentMedia["file_id"];
+            $currentMediaStreamId = $currentMedia["stream_id"];
+            if (isset($currentMediaFileId)) {
+                $currentMediaType = "track";
+                $currentFile = CcFilesQuery::create()
+                    ->filterByDbId($currentMediaFileId)
+                    ->findOne();
+                $currentMediaName = $currentFile->getDbArtistName() . " - " . $currentFile->getDbTrackTitle();
+            } else if (isset($currentMediaStreamId)) {
+                $currentMediaType = "webstream";
+                $currentWebstream = CcWebstreamQuery::create()
+                    ->filterByDbId($currentMediaStreamId)
+                    ->findOne();
+                $currentWebstreamMetadata = CcWebstreamMetadataQuery::create()
+                    ->filterByDbInstanceId($currentMedia["instance_id"])
+                    ->orderByDbStartTime(Criteria::DESC)
+                    ->findOne();
+                $currentMediaName = $currentWebstream->getDbName();
+                if (isset($currentWebstreamMetadata)) {
+                    $currentMediaName .= " - " . $currentWebstreamMetadata->getDbLiquidsoapData();
                 }
-                 $results['current'] =  array("name"=>$rows[$i]["artist_name"]." - ".$rows[$i]["track_title"],
-                            "starts"=>$rows[$i]["starts"],
-                            "ends"=> (($rows[$i]["ends"] > $rows[$i]["show_ends"]) ? $rows[$i]["show_ends"]: $rows[$i]["ends"]),
-                            "media_item_played"=>$rows[$i]["media_item_played"],
-                            "record"=>0,
-                            "type"=>'track');
-                if (isset($rows[$i+1])) {
-                    $results['next'] =  array("name"=>$rows[$i+1]["artist_name"]." - ".$rows[$i+1]["track_title"],
-                            "starts"=>$rows[$i+1]["starts"],
-                            "ends"=>$rows[$i+1]["ends"],
-                            "type"=>'track');
-                }
-                break;
+            } else {
+                $currentMediaType = null;
             }
-            if ($curShowEndTime < $utcNow ) {
-                $previousIndex = $i;
-            }
-            if ($curShowStartTime > $utcNow) {
-                $results['next'] = array("name"=>$rows[$i]["artist_name"]." - ".$rows[$i]["track_title"],
-                            "starts"=>$rows[$i]["starts"],
-                            "ends"=>$rows[$i]["ends"],
-                            "type"=>'track');
-                break;
-            }
+
+            $results["current"] = array(
+                "starts" => $currentMedia["starts"],
+                "ends" => $currentMedia["ends"],
+                "type" => $currentMediaType,
+                "name" => $currentMediaName,
+                "media_item_played" => $currentMedia["media_item_played"],
+                "record" => "0"
+            );
         }
-        //If we didn't find a a current show because the time didn't fit we may still have
-        //found a previous show so use it.
-        if ($results['previous'] === null && isset($previousIndex)) {
-                $results['previous'] = array("name"=>$rows[$previousIndex]["artist_name"]." - ".$rows[$previousIndex]["track_title"],
-                            "starts"=>$rows[$previousIndex]["starts"],
-                            "ends"=>$rows[$previousIndex]["ends"]);;
+
+        $previousMedia = CcScheduleQuery::create()
+            ->filterByDbEnds($utcNow, Criteria::LESS_THAN)
+            ->filterByDbPlayoutStatus(0, Criteria::GREATER_THAN)
+            ->orderByDbStarts(Criteria::DESC)
+            ->findOne();
+        if (isset($previousMedia)) {
+            $previousMediaName = "";
+            $previousMediaFileId = $previousMedia->getDbFileId();
+            $previousMediaStreamId = $previousMedia->getDbStreamId();
+            if (isset($previousMediaFileId)) {
+                $previousMediaType = "track";
+                $previousFile = CcFilesQuery::create()
+                    ->filterByDbId($previousMediaFileId)
+                    ->findOne();
+                $previousMediaName = $previousFile->getDbArtistName() . " - " . $previousFile->getDbTrackTitle();
+            } else if (isset($previousMediaStreamId)) {
+                $previousMediaName = null;
+                $previousMediaType = "webstream";
+                $previousWebstream = CcWebstreamQuery::create()
+                    ->filterByDbId($previousMediaStreamId)
+                    ->findOne();
+                $previousMediaName = $previousWebstream->getDbName();
+            } else {
+                $previousMediaType = null;
+            }
+            $results["previous"] = array(
+                "starts" => $previousMedia->getDbStarts(),
+                "ends" => $previousMedia->getDbEnds(),
+                "type" => $previousMediaType,
+                "name" => $previousMediaName
+            );
+        }
+
+        $nextMedia = CcScheduleQuery::create()
+            ->filterByDbStarts($utcNow, Criteria::GREATER_THAN)
+            ->filterByDbPlayoutStatus(0, Criteria::GREATER_THAN)
+            ->orderByDbStarts(Criteria::ASC)
+            ->findOne();
+        if (isset($nextMedia)) {
+            $nextMediaName = "";
+            $nextMediaFileId = $nextMedia->getDbFileId();
+            $nextMediaStreamId = $nextMedia->getDbStreamId();
+            if (isset($nextMediaFileId)) {
+                $nextMediaType = "track";
+                $nextFile = CcFilesQuery::create()
+                    ->filterByDbId($nextMediaFileId)
+                    ->findOne();
+                $nextMediaName = $nextFile->getDbArtistName() . " - " . $nextFile->getDbTrackTitle();
+            } else if (isset($nextMediaStreamId)) {
+                $nextMediaType = "webstream";
+                $nextWebstream = CcWebstreamQuery::create()
+                    ->filterByDbId($nextMediaStreamId)
+                    ->findOne();
+                $nextMediaName = $nextWebstream->getDbName();
+            } else {
+                $nextMediaType = null;
+            }
+            $results["next"] = array(
+                "starts" => $nextMedia->getDbStarts(),
+                "ends" => $nextMedia->getDbEnds(),
+                "type" => $nextMediaType,
+                "name" => $nextMediaName
+            );
         }
 
         return $results;
+
+    }
+
+    /**
+     * Get the current prioritized source
+     *
+     * Priority order is Master->Live/Show->Scheduled.
+     *
+     * @return string the source name
+     */
+    private static function _getSource() {
+        $live_dj = Application_Model_Preference::GetSourceStatus("live_dj");
+        $master_dj = Application_Model_Preference::GetSourceStatus("master_dj");
+        $source = ($master_dj ? self::MASTER_SOURCE_NAME
+                              : ($live_dj ? self::SHOW_SOURCE_NAME : self::SCHEDULED_SOURCE_NAME));
+        return $source;
     }
 
     public static function GetLastScheduleItem($p_timeNow)
@@ -344,13 +413,13 @@ SQL;
      */
     public static function GetScheduleDetailItems($p_start, $p_end, $p_shows, $p_show_instances)
     {
-        $p_start_str = $p_start->format("Y-m-d H:i:s");
-        $p_end_str = $p_end->format("Y-m-d H:i:s");
+        $p_start_str = $p_start->format(DEFAULT_TIMESTAMP_FORMAT);
+        $p_end_str = $p_end->format(DEFAULT_TIMESTAMP_FORMAT);
 
         //We need to search 48 hours before and after the show times so that that we
         //capture all of the show's contents.
-        $p_track_start= $p_start->sub(new DateInterval("PT48H"))->format("Y-m-d H:i:s");
-        $p_track_end = $p_end->add(new DateInterval("PT48H"))->format("Y-m-d H:i:s");
+        $p_track_start= $p_start->sub(new DateInterval("PT48H"))->format(DEFAULT_TIMESTAMP_FORMAT);
+        $p_track_end = $p_end->add(new DateInterval("PT48H"))->format(DEFAULT_TIMESTAMP_FORMAT);
 
         $templateSql = <<<SQL
 SELECT DISTINCT sched.starts AS sched_starts,
@@ -534,7 +603,7 @@ SQL;
 
     public static function UpdateBrodcastedStatus($dateTime, $value)
     {
-        $now = $dateTime->format("Y-m-d H:i:s");
+        $now = $dateTime->format(DEFAULT_TIMESTAMP_FORMAT);
 
         $sql = <<<SQL
 UPDATE cc_schedule
@@ -696,7 +765,7 @@ SQL;
         if (count($rows) < 3) {
             $dt = new DateTime("@".time());
             $dt->add(new DateInterval("PT24H"));
-            $range_end = $dt->format("Y-m-d H:i:s");
+            $range_end = $dt->format(DEFAULT_TIMESTAMP_FORMAT);
 
             $predicates = <<<SQL
 WHERE st.ends > :startTime1
@@ -748,7 +817,7 @@ SQL;
             $transition_time   = intval($temp[0]);
             $switchOffDataTime = new DateTime($kick_time, $utcTimeZone);
             $switch_off_time   = $switchOffDataTime->sub(new DateInterval('PT'.$transition_time.'S'));
-            $switch_off_time   = $switch_off_time->format("Y-m-d H:i:s");
+            $switch_off_time   = $switch_off_time->format(DEFAULT_TIMESTAMP_FORMAT);
 
             $kick_start = self::AirtimeTimeToPypoTime($kick_time);
             $data["media"][$kick_start]['start']             = $kick_start;
@@ -834,7 +903,7 @@ SQL;
         $buffer_start = new DateTime($item["start"], new DateTimeZone('UTC'));
         $buffer_start->sub(new DateInterval("PT5S"));
 
-        $stream_buffer_start = self::AirtimeTimeToPypoTime($buffer_start->format("Y-m-d H:i:s"));
+        $stream_buffer_start = self::AirtimeTimeToPypoTime($buffer_start->format(DEFAULT_TIMESTAMP_FORMAT));
 
         $schedule_item = array(
             'start'             => $stream_buffer_start,
@@ -864,7 +933,7 @@ SQL;
         $dt = new DateTime($item["end"], new DateTimeZone('UTC'));
         $dt->sub(new DateInterval("PT1S"));
 
-        $stream_end = self::AirtimeTimeToPypoTime($dt->format("Y-m-d H:i:s"));
+        $stream_end = self::AirtimeTimeToPypoTime($dt->format(DEFAULT_TIMESTAMP_FORMAT));
 
         $schedule_item = array(
             'start'             => $stream_end,
@@ -896,7 +965,7 @@ SQL;
             then set range * from "now" to "now + 24 hours". */
         if (is_null($p_fromDateTime)) {
             $t1 = new DateTime("@".time(), $utcTimeZone);
-            $range_start = $t1->format("Y-m-d H:i:s");
+            $range_start = $t1->format(DEFAULT_TIMESTAMP_FORMAT);
         } else {
             $range_start = Application_Model_Schedule::PypoTimeToAirtimeTime($p_fromDateTime);
         }
@@ -913,7 +982,7 @@ SQL;
             }
 
             $t2->add(new DateInterval("PT".$cache_ahead_hours."H"));
-            $range_end = $t2->format("Y-m-d H:i:s");
+            $range_end = $t2->format(DEFAULT_TIMESTAMP_FORMAT);
         } else {
             $range_end = Application_Model_Schedule::PypoTimeToAirtimeTime($p_toDateTime);
         }
@@ -942,7 +1011,7 @@ SQL;
                 $di = $trackStartDateTime->diff($showEndDateTime);
 
                 $item["cue_out"] = $di->format("%H:%i:%s").".000";
-                $item["end"] = $showEndDateTime->format("Y-m-d H:i:s");
+                $item["end"] = $showEndDateTime->format(DEFAULT_TIMESTAMP_FORMAT);
             }
 
             if (!is_null($item['file_id'])) {
@@ -950,9 +1019,11 @@ SQL;
                 $media_id = $item['file_id'];
                 $storedFile = Application_Model_StoredFile::RecallById($media_id);
                 $file = $storedFile->getPropelOrm();
-                $uri = $file->getAbsoluteFilePath();
+                //Even local files are downloaded through the REST API in case we need to transform
+                //their filenames (eg. in the case of a bad file extension, because Liquidsoap won't play them)
+                $uri = Application_Common_HTTPHelper::getStationUrl() . "/rest/media/" . $media_id;
+                //$uri = $file->getAbsoluteFilePath();
                 
-                $baseUrl = Application_Common_OsPath::getBaseDir();
                 $filesize = $file->getFileSize();
                 self::createFileScheduleEvent($data, $item, $media_id, $uri, $filesize);
             } 
@@ -1072,7 +1143,7 @@ SQL;
         if (!is_null($showId)) {
             $ccShowInstance = CcShowInstancesQuery::create()
                 ->filterByDbShowId($showId)
-                ->filterByDbStarts($show_start->format("Y-m-d H:i:s"))
+                ->filterByDbStarts($show_start->format(DEFAULT_TIMESTAMP_FORMAT))
                 ->findOne();
         } elseif (!is_null($instanceId)) {
             $ccShowInstance = CcShowInstancesQuery::create()
@@ -1086,9 +1157,9 @@ SQL;
         $overlapping = false;
 
         $params = array(
-            ':show_end1'  => $show_end->format('Y-m-d H:i:s'),
-            ':show_end2'  => $show_end->format('Y-m-d H:i:s'),
-            ':show_end3'  => $show_end->format('Y-m-d H:i:s')
+            ':show_end1'  => $show_end->format(DEFAULT_TIMESTAMP_FORMAT),
+            ':show_end2'  => $show_end->format(DEFAULT_TIMESTAMP_FORMAT),
+            ':show_end3'  => $show_end->format(DEFAULT_TIMESTAMP_FORMAT)
         );
 
 
@@ -1135,9 +1206,9 @@ ORDER BY ends
 SQL;
 
             $rows = Application_Common_Database::prepareAndExecute($sql, array(
-                ':show_end1' => $show_end->format('Y-m-d H:i:s'),
-                ':show_end2' => $show_end->format('Y-m-d H:i:s'),
-                ':show_end3' => $show_end->format('Y-m-d H:i:s')), 'all');
+                ':show_end1' => $show_end->format(DEFAULT_TIMESTAMP_FORMAT),
+                ':show_end2' => $show_end->format(DEFAULT_TIMESTAMP_FORMAT),
+                ':show_end3' => $show_end->format(DEFAULT_TIMESTAMP_FORMAT)), 'all');
         }
 
         foreach ($rows as $row) {

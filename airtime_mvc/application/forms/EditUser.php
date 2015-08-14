@@ -23,9 +23,10 @@ class Application_Form_EditUser extends Zend_Form
                 array('ViewScript', array('viewScript' => 'form/edit-user.phtml', "currentUser" => $currentUser->getLogin()))));
         $this->setAttrib('id', 'current-user-form');
 
-        $this->addElement('hash', 'csrf', array(
-           'salt' => 'unique'
-        ));
+        $csrf_namespace = new Zend_Session_Namespace('csrf_namespace');
+        $csrf_element = new Zend_Form_Element_Hidden('csrf');
+        $csrf_element->setValue($csrf_namespace->authtoken)->setRequired('true')->removeDecorator('HtmlTag')->removeDecorator('Label');
+        $this->addElement($csrf_element);
         
         $hidden = new Zend_Form_Element_Hidden('cu_user_id');
         $hidden->setDecorators(array('ViewHelper'));
@@ -157,10 +158,13 @@ class Application_Form_EditUser extends Zend_Form
 
     // We need to add the password identical validator here in case
     // Zend version is less than 1.10.5
-    public function isValid($data) {
-        $passwordIdenticalValidator = Application_Form_Helper_ValidationTypes::overridePasswordIdenticalValidator(
-            $data['cu_password']);
-        $this->getElement('cu_passwordVerify')->addValidator($passwordIdenticalValidator);
+    public function isValid($data)
+    {
+        if (isset($data['cu_password'])) {
+            $passwordIdenticalValidator = Application_Form_Helper_ValidationTypes::overridePasswordIdenticalValidator(
+                $data['cu_password']);
+            $this->getElement('cu_passwordVerify')->addValidator($passwordIdenticalValidator);
+        }
         return parent::isValid($data);
     }
 }

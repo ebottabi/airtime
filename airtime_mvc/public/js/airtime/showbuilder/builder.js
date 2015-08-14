@@ -12,7 +12,8 @@ var AIRTIME = (function(AIRTIME){
         cursors = [],
         cursorIds = [],
         showInstanceIds = [],
-        headerFooter = [];
+        headerFooter = [],
+        DISABLED_CLASS = 'ui-state-disabled';
     
     if (AIRTIME.showbuilder === undefined) {
         AIRTIME.showbuilder = {};
@@ -134,12 +135,14 @@ var AIRTIME = (function(AIRTIME){
     
     mod.checkDeleteButton = function() {
         var $selected = $sbTable.find("tbody").find("input:checkbox").filter(":checked");
-        
+
+        var button = $("#show_builder").find(".icon-trash").parent();
         if ($selected.length !== 0) {
-            AIRTIME.button.enableButton("icon-trash", true);
-        }
-        else {
-            AIRTIME.button.disableButton("icon-trash", true);
+            button.removeClass(DISABLED_CLASS);
+            button.removeAttr('disabled');
+        } else {
+            button.addClass(DISABLED_CLASS);
+            button.attr('disabled', 'disabled');
         }
     };
     
@@ -280,6 +283,8 @@ var AIRTIME = (function(AIRTIME){
         mod.enableUI();
         //Unneccessary reload of the library pane after moving tracks in the showbuilder pane.
         //$("#library_content").find("#library_display").dataTable().fnStandingRedraw();
+
+        getUsabilityHint();
     };
     
     mod.getSelectedCursors = function() {
@@ -313,14 +318,14 @@ var AIRTIME = (function(AIRTIME){
         mod.disableUI();
         
         $.post(baseUrl+"showbuilder/schedule-add", 
-            {"format": "json", "mediaIds": aMediaIds, "schedIds": aSchedIds}, 
+            {"format": "json", "mediaIds": aMediaIds, "schedIds": aSchedIds},
             mod.fnItemCallback
         );
     };
     
     mod.fnMove = function(aSelect, aAfter) {
         
-        //mod.disableUI();
+        mod.disableUI();
         
         $.post(baseUrl+"showbuilder/schedule-move", 
             {"format": "json", "selectedItem": aSelect, "afterItem": aAfter},  
@@ -479,9 +484,11 @@ var AIRTIME = (function(AIRTIME){
 
                 /*
                 a = oData.ColReorder;
-                for (i = 0, length = a.length; i < length; i++) {   
-                    if (typeof(a[i]) === "string") {
-                        a[i] = parseInt(a[i], 10);
+                if (a) {
+                    for (i = 0, length = a.length; i < length; i++) {
+                        if (typeof(a[i]) === "string") {
+                            a[i] = parseInt(a[i], 10);
+                        }
                     }
                 }*/
                
@@ -530,9 +537,6 @@ var AIRTIME = (function(AIRTIME){
                     cl = 'sb-header';
                     
                     if (aData.record === true) {
-                        
-                        headerIcon =  (aData.soundcloud_id > 0) ? "soundcloud" : "recording";
-                        
                         $div = $("<div/>", {
                             "class": "small-icon " + headerIcon
                         });
@@ -590,9 +594,10 @@ var AIRTIME = (function(AIRTIME){
                     //remove the column classes from all tds.
                     $nRow.find('td').removeClass();
                     
-                    //$node = $(nRow.children[0]).replaceWith(emptyNode);;
-                    //$node.html('');
-                    $node.empty();
+                    $node = $(nRow.children[0]);
+                    if ($node) {
+                        $node.empty();
+                    }
                     
                     sSeparatorHTML = '<span>'+$.i18n._("Show Empty")+'</span>';
                     cl = cl + " sb-empty odd";
@@ -827,7 +832,7 @@ var AIRTIME = (function(AIRTIME){
                     $parent.append($table);
 
                 }
-                
+                 */
                 //order of importance of elements for setting the next timeout.
                 elements = [
                     $sbTable.find("tr."+NOW_PLAYING_CLASS),
@@ -850,7 +855,8 @@ var AIRTIME = (function(AIRTIME){
 						mod.timeout = setTimeout(function() {mod.refresh(aData.id)}, refreshInterval); //need refresh in milliseconds
                         break;
                     }
-                }*/
+                }
+
                 
                 mod.checkToolBarIcons();
             },
@@ -1011,8 +1017,18 @@ var AIRTIME = (function(AIRTIME){
                     }
                     
                     if (selected.length === 1) {
-                        //message = $.i18n._("Moving 1 Item");
-                        draggingContainer = item;
+                        message = sprintf($.i18n._("Moving %s"), selected[0].title);
+                        //draggingContainer = item; //Default DataTables drag and drop
+                        draggingContainer = $('<tr/>')
+                            .addClass('sb-helper')
+                            .append('<td/>')
+                            .find("td")
+                            .attr("colspan", colspan)
+                            .width(width)
+                            .height(height)
+                            .addClass("ui-state-highlight")
+                            .append(message)
+                            .end();
                     }
                     else {
                         message = sprintf($.i18n._("Moving %s Items"), selected.length);
@@ -1174,8 +1190,10 @@ var AIRTIME = (function(AIRTIME){
         //delete selected tracks
         $toolbar.find('.icon-trash').parent()
             .click(function() {
-                
-                if (AIRTIME.button.isDisabled('icon-trash', true) === true) {
+
+                var button = $("#show_builder").find(".icon-trash").parent();
+
+                if (button.hasClass(DISABLED_CLASS)) {
                     return;
                 }
                 

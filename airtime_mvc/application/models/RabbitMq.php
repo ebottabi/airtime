@@ -1,5 +1,6 @@
 <?php
 require_once 'php-amqplib/amqp.inc';
+require_once 'massivescale/celery-php/celery.php';
 
 class Application_Model_RabbitMq
 {
@@ -79,12 +80,10 @@ class Application_Model_RabbitMq
         self::sendMessage($exchange, 'direct', true, $data);
     }
 
-    public static function SendMessageToAnalyzer($tmpFilePath, $importedStorageDirectory, $originalFilename,
-                                                $callbackUrl, $apiKey, $storageBackend, $filePrefix)
-    {
+    public static function getRmqConfigPath() {
         //Hack for Airtime Pro. The RabbitMQ settings for communicating with airtime_analyzer are global
         //and shared between all instances on Airtime Pro.
-        $CC_CONFIG = Config::getConfig();        
+        $CC_CONFIG = Config::getConfig();
         $devEnv = "production"; //Default
         if (array_key_exists("dev_env", $CC_CONFIG)) {
             $devEnv = $CC_CONFIG["dev_env"];
@@ -95,7 +94,13 @@ class Application_Model_RabbitMq
             // to the production rabbitmq-analyzer.ini
             $rmq_config_path = "/etc/airtime-saas/production/rabbitmq-analyzer.ini";
         }
-        $config = parse_ini_file($rmq_config_path, true);
+        return $rmq_config_path;
+    }
+
+    public static function SendMessageToAnalyzer($tmpFilePath, $importedStorageDirectory, $originalFilename,
+                                                $callbackUrl, $apiKey, $storageBackend, $filePrefix)
+    {
+        $config = parse_ini_file(self::getRmqConfigPath(), true);
         $conn = new AMQPConnection($config["rabbitmq"]["host"],
                 $config["rabbitmq"]["port"],
                 $config["rabbitmq"]["user"],
@@ -112,12 +117,7 @@ class Application_Model_RabbitMq
         $data['original_filename'] = $originalFilename;
         $data['callback_url'] = $callbackUrl;
         $data['api_key'] = $apiKey;
-        // Pass station name to the analyzer so we can set it with the file's
-        // metadata before uploading it to the cloud. This isn't a requirement
-        // for cloud storage, but put there as a safeguard, since all Airtime
-        // Pro stations will share the same bucket.
-        $data['station_domain'] = $stationDomain = Application_Model_Preference::GetStationName();
-        
+
         // We add a prefix to the resource name so files are not all placed
         // under the root folder. We do this in case we need to restore a 
         // customer's file/s; File restoration is done via the S3 Browser
@@ -150,44 +150,7 @@ class Application_Model_RabbitMq
     
     
     public static function SendMessageToHaproxyConfigDaemon($md){
-        $config = parse_ini_file("/etc/airtime-saas/rabbitmq.ini", true);
-        $conn = new AMQPConnection($config["rabbitmq"]["host"],
-        $config["rabbitmq"]["port"],
-        $config["rabbitmq"]["user"],
-        $config["rabbitmq"]["password"],
-        $config["rabbitmq"]["vhost"]);
+        //XXX: This function has been deprecated and is no longer needed
+    }
 
-        $exchange = $config["rabbitmq"]["queue"];
-        $queue = $config["rabbitmq"]["queue"];
-
-        $ch = $conn->channel();
-
-
-        /*
-            name: $queue
-            passive: false
-            durable: true // the queue will survive server restarts
-            exclusive: false // the queue can be accessed in other channels
-            auto_delete: false //the queue won't be deleted once the channel is closed.
-        */
-        $ch->queue_declare($queue, false, true, false, false);
-
-        /*
-            name: $exchange
-            type: direct
-            passive: false
-            durable: true // the exchange will survive server restarts
-            auto_delete: false //the exchange won't be deleted once the channel is closed.
-        */
-
-        $ch->exchange_declare($exchange, 'direct', false, true, false);
-        $ch->queue_bind($queue, $exchange);
-
-        $data = json_encode($md).PHP_EOL;
-        $msg = new AMQPMessage($data, array('content_type' => 'application/json'));
-
-        $ch->basic_publish($msg, $exchange);
-        $ch->close();
-        $conn->close();
-    }        
 }

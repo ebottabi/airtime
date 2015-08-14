@@ -21,6 +21,19 @@ html, body {
     text-align:center;
 }
 
+#login-page fieldset
+{
+    padding: 10px;
+    border: 1px solid #555;
+    margin-bottom: 10px;
+}
+
+#login-page legend {
+    font-weight: bold;
+    color: #919191;
+}
+
+
 h2 {
     color: #000000;
     font-size: 2.1em;
@@ -45,6 +58,11 @@ select {
     font-size:12px;
     font-family:Arial, Helvetica, sans-serif;
     border:1px solid #9d9d9d;
+}
+
+/* Fix for Firefox */
+fieldset {
+    clear: both;
 }
 
 .logo {
@@ -111,19 +129,38 @@ select {
     margin-left: 7px !important;
 }
 
-.override_help_icon, .icecast_metadata_help_icon {
-        cursor: help;
-        position: relative;
-        
-        display:inline-block; zoom:1; display:inline;
-        width:14px; height:14px;
-        background:url(images/icon_info.png) 0 0 no-repeat;
-        float:right; position:relative; top:2px; right:7px;
-        line-height:16px !important;
+.override_help_icon, .icecast_metadata_help_icon, .master_username_help_icon {
+    cursor: help;
+    position: relative;
+
+    display: inline-block;
+    zoom:1;
+    width:14px; height:14px;
+    background:url(images/icon_info.png) 0 0 no-repeat;
+    float:right;
+    top:2px;
+    right:7px;
+    line-height:16px !important;
+}
+
+#auto_switch_help, #auto_transition_help {
+    right: 200px;
+}
+
+.master_username_help_icon {
+    margin-top: 6px;
+}
+
+.input-settings-inline-p {
+    color: #4F4F4F;
+    font-size: 12px;
+    line-height: 140%;
+    margin-top: 0;
+
 }
 
 .airtime_auth_help_icon, .custom_auth_help_icon, .stream_username_help_icon,
-.playlist_type_help_icon, .master_username_help_icon, .repeat_tracks_help_icon,
+.playlist_type_help_icon, .repeat_tracks_help_icon,
 .admin_username_help_icon, .stream_type_help_icon, .show_linking_help_icon,
 .show_timezone_help_icon{
         cursor: help;
@@ -141,15 +178,28 @@ select {
 * html .clearfix, * html li { height: 1%;}
 .clearfix, #side_playlist li {    display: block;    }
 
-
 /* Master Panel */
+
+.sticky {
+    position: fixed;
+    width: 100%;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    border-top: 0;
+}
+
+.push {
+    width: 100%;
+    height: 139px;
+}
+
 #sticky {
     position:fixed;
     height:130px;
     top:0;
     left:0;
 }
-
 
 #master-panel {
     background:#3d3d3d url(images/masterpanel_bg.png) repeat-x 0 0;
@@ -319,7 +369,7 @@ select {
         width: 40%;
     }
 }
-@media screen and (max-width: 863px) {
+@media screen and (max-width: 1100px) {
     #nav {
         height: inherit;
         overflow-y: visible;
@@ -427,7 +477,10 @@ select {
 
 
 .wrapper {
-    margin: 0 5px 0 5px;
+    position: absolute;
+    top: 141px;
+    left: 10px;
+    right: 10px;
     padding:10px 0 0 0;
 }
 
@@ -484,7 +537,7 @@ fieldset.plain {
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2) inset;
 }
 
-input[readonly]{
+input[readonly], textarea[readonly] {
     background-color:#b1b1b1
 }
 
@@ -518,6 +571,29 @@ input[type="text"]:focus, input[type="password"]:focus, textarea:focus, .input_t
 
 .add_show_input_select{
     width: 150px;
+}
+
+/***** Show Builder *****/
+
+#show_builder {
+    /* This breaks the add content dialog at low resolutions :(
+    min-width: 470px;*/
+}
+
+#builder-dialog-hint {
+    text-align: center;
+    /*line-height: 62px;*/
+    height: 62px;
+    display: table;
+    width: 100%;
+}
+
+#builder-dialog-hint p
+{
+    font-size: 14px;
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
 }
 
 /***** LIBRARY QTIP METADATA SPECIFIC STYLES BEGIN *****/
@@ -1007,7 +1083,7 @@ input[type="checkbox"] {
     margin:0;
     padding:8px 0 16px 0;
     font-size:12px;
-    color:#717171;
+    color: #919191;
     text-align:left;
 }
 .logobox {
@@ -1132,13 +1208,17 @@ input[type="checkbox"] {
 .login-content .text-right, .text-right {
     text-align:right;
 }
-.login-content .link {
+.login-content a {
     color:#FF5D1A;
     text-decoration:none;
-    }
-    .login-content .link:hover {
-        text-decoration:underline;
-        }
+}
+.login-content a:hover {
+    text-decoration:underline;
+}
+
+.login-content .errors a {
+    color: #ff1c13;
+}
 
 /*---//////////////////// END LOGIN ////////////////////---*/
 
@@ -1182,10 +1262,10 @@ input[type="checkbox"] {
     left:0;
     margin-bottom:140px;
 }*/
-.sticky {
-    padding:0;
-    width:100%;
-}
+/*.sticky {*/
+    /*padding:0;*/
+    /*width:100%;*/
+/*}*/
 
 .floated-panel {
     margin-top:0;
@@ -1227,10 +1307,13 @@ input[type="checkbox"] {
     margin: 0;
 }
 
+.dataTables_scrolling {
+    /*min-height: 150px;*/
+}
+
 .ui-dialog #schedule_playlist_dialog.ui-dialog-content {
     padding:0;
 }
-
 
 #schedule_playlist_dialog > div {
     background: none repeat scroll 0 0 transparent;
@@ -1484,7 +1567,7 @@ h2#scheduled_playlist_name span {
     border-color:#343434;
     border-width: 1px 0 0 1px;
 }
-/*---//////////////////// Advenced Search ////////////////////---*/
+/*---//////////////////// Advanced Search ////////////////////---*/
 
 .search_control {
     padding:8px;
@@ -1772,7 +1855,7 @@ ul.errors {
     width:278px;
 }
 
-ul.errors li {
+ul.errors li, .warning {
     color:#902d2d;
     font-size:11px;
     padding:2px 4px;
@@ -1780,6 +1863,11 @@ ul.errors li {
     margin-bottom:2px;
     border:1px solid #c83f3f;
     list-style: none;
+}
+
+.warning-label {
+    font-size: medium;
+    text-align: center;
 }
 
 div.success{
@@ -1817,10 +1905,10 @@ span.errors.sp-errors{
     margin:8px 0 0 0;
     cursor:pointer;
     position:relative;
+    clear: both;
 }
 .collapsible-content {
     margin-top:-1px;
-    display:none;
 }
 .collapsible-header .arrow-icon, .collapsible-header-disabled  .arrow-icon {
     display:block;
@@ -1832,9 +1920,8 @@ span.errors.sp-errors{
     top:8px;
     
 }
-.collapsible-header.closed .arrow-icon, collapsible-header-disabled.close  .arrow-icon {
+.collapsible-header.closed .arrow-icon, .collapsible-header-disabled.close  .arrow-icon {
     background-position: 0 -11px !important;
-    
 }
 #schedule-add-show .button-bar {
     height: 28px;
@@ -1848,44 +1935,6 @@ span.errors.sp-errors{
     height:38px;
 }
 
-.add-button, .ui-widget-content a.add-button {
-    border: 1px solid #242424;
-    background-color: #353535;
-    background: -moz-linear-gradient(top, #494949 0, #353535 100%);
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #494949), color-stop(100%, #353535));
-    color: #ffffff;
-    margin:0;
-    font-size:12px;
-    font-weight:bold;
-    padding:4px 12px 4px 22px;
-    text-decoration:none;
-    text-shadow: #000 0px -1px;
-    display:block;
-    float:left;
-    position:relative;
-}
-.add-button:hover, .ui-widget-content a.add-button:hover  {
-    border: 1px solid #000000;
-    background-color: #353535;
-    background: -moz-linear-gradient(top, #353535 0, #000000 100%);
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #353535), color-stop(100%, #000000));
-    color: #ffffff;
-}
-.add-button span {
-    position:absolute;
-    top:3px;
-    left:3px;
-    height:16px;
-    width:16px;
-    display:block;
-    background:url(redmond/images/ui-icons_ffffff_256x240.png) no-repeat;
-}
-.add-button:hover span {
-    background:url(redmond/images/ui-icons_ff5d1a_256x240.png) no-repeat;
-}
-.add-button span.add-icon {
-    background-position: -32px -128px;
-}
 
 /*---//////////////////// NOW PLAYING COLORS ////////////////////---*/
 .playing-song, .datatable tr.playing-song:hover td {
@@ -1904,7 +1953,6 @@ span.errors.sp-errors{
     background-color:#0aa2be;
     color:#FFF;
 }
-
 
 /*---//////////////////// END NOW PLAYING COLORS ////////////////////---*/
 .icon-link, .ui-widget-content a.icon-link {
@@ -2204,6 +2252,10 @@ span.errors.sp-errors{
     width: 1100px;
 }
 
+#stream_save_bottom {
+    bottom: 0;
+}
+
 .preferences .padded {
     margin-top: 5px; /* Firefox needs this */
 }
@@ -2239,13 +2291,8 @@ dd.radio-inline-list, .preferences dd.radio-inline-list, .stream-config dd.radio
 .radio-inline-list label {
     margin-right:12px;
 }
-.preferences.simple-formblock dd.block-display {
-    width: 100%;
-}
-
-.preferences.simple-formblock dd.block-display select, .stream-config.simple-formblock dd.block-display select {
-    width: 100%;
-}
+.preferences.simple-formblock dd.block-display,
+ .preferences.simple-formblock dd.block-display select, .stream-config.simple-formblock dd.block-display select,
 .preferences dd.block-display .input_select, .stream-config dd.block-display .input_select {
     width: 100%;
 }
@@ -2266,6 +2313,15 @@ dd.radio-inline-list, .preferences dd.radio-inline-list, .stream-config dd.radio
 .preferences #logo-remove-btn {
     /*float: left;*/
     margin-bottom: 4px;
+}
+
+.preferences #Logo-img-container {
+    margin-top: 30px;
+}
+
+.centered {
+    margin: 0 auto;
+    display: block;
 }
 
 #show_time_info {
@@ -3217,3 +3273,77 @@ dd .stream-status {
 {
     color: #222;
 }
+
+.suspension_notice
+{
+    text-align: center;
+    background-color: #D27A7A;
+    height: 143px;
+    font-size: 16px;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+.suspension_notice h2
+{
+    padding-bottom: 0px;
+    padding-top: 13px;
+}
+
+.enable-tunein {
+    font-weight:bold;
+}
+
+#weekly-schedule-widget {
+    margin: 0 auto;
+    margin-bottom: 20px;
+    width: 50%;
+}
+
+#widget-menu {
+    margin: 0 auto;
+    margin-bottom: 20px;
+    width: 40%;
+}
+
+#widget-menu a {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+#player-widget {
+    margin-bottom: 20px;
+}
+
+#weekly-schedule-widget label {
+    font-weight: bold;
+}
+
+.schedule_iframe_wrapper {
+    width: 100%;
+    float: left;
+    text-align: center;
+    padding: 10px;
+}
+
+#schedule_iframe {
+    margin: 0 auto;
+}
+
+.usability_hint {
+    padding: 5px 10px 5px 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ff611f;
+    background-color: #ff611f;
+    color: white;
+    font-size: 14px;
+}
+
+.usability_hint a {
+    color: white;
+}
+
+.calendar-context-menu {
+    min-width: 200px !important;
+}
+

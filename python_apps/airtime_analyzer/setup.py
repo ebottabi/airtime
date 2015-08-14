@@ -1,6 +1,12 @@
 from setuptools import setup
 from subprocess import call
 import sys
+import os
+
+# Change directory since setuptools uses relative paths
+script_path = os.path.dirname(os.path.realpath(__file__))
+print script_path
+os.chdir(script_path)
 
 # Allows us to avoid installing the upstart init script when deploying airtime_analyzer
 # on Airtime Pro:
@@ -23,12 +29,13 @@ setup(name='airtime_analyzer',
       install_requires=[
           'mutagen',
           'pika',
+          'daemon',
           'python-magic',
           'nose',
           'coverage',
           'mock',
           'python-daemon==1.6',
-          'requests',
+          'requests>=2.7.0',
           'apache-libcloud',
           'rgain',
           'boto',
