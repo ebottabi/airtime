@@ -202,7 +202,9 @@ class PreferenceController extends Zend_Controller_Action
             $values["s3_data"] = $s3_data;
             $values["s4_data"] = $s4_data;
 
-            if ($form->isValid($values)) {
+            $streamEnabled = $this->hasEnabledStream($values);
+
+            if ($form->isValid($values) && $streamEnabled) {
 
                 $values['icecast_vorbis_metadata'] = $form->getValue('icecast_vorbis_metadata');
                 $values['streamFormat'] = $form->getValue('streamFormat');
@@ -296,7 +298,9 @@ class PreferenceController extends Zend_Controller_Action
         $this->view->enable_stream_conf = Application_Model_Preference::GetEnableStreamConf();
         $this->view->form = $form;
         if ($request->isPost()) {
-            if ($form->isValid($values)) {
+            if (!$streamEnabled) {
+                $this->_helper->json->sendJson(array("valid" => "false", "error" => _("You must enable at least one of your streams!")));
+            } else if ($form->isValid($values)) {
                 $this->_helper->json->sendJson(array(
                                                    "valid" => "true",
                                                    "html" => $this->view->render('preference/stream-setting.phtml'),
@@ -309,6 +313,25 @@ class PreferenceController extends Zend_Controller_Action
                 $this->_helper->json->sendJson(array("valid" => "false", "html" => $this->view->render('preference/stream-setting.phtml')));
             }
         }
+    }
+
+    /**
+     * Check if the user has at least one stream enabled
+     *
+     * @param array $v the stream settings form values as a multidimensional array
+     *
+     * @return bool true if the user has at least one stream enabled, otherwise false
+     */
+    private function hasEnabledStream($v) {
+        Logging::info($v);
+
+        $streamEnabled = false;
+        foreach ($v as $f) {
+            if (!is_array($f) || empty($f)) continue;
+            $streamEnabled = $streamEnabled || $f["enable"];
+        }
+
+        return $streamEnabled;
     }
 
     /**
