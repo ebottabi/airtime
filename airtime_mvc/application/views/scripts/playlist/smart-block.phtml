@@ -35,11 +35,11 @@ if (isset($this->obj)) {
 </div>
 
 <?php if (isset($this->obj)) : ?>
-    <input id="obj_id" type="hidden" value="<?php echo $this->obj->getId(); ?>"></input>
-    <input id="obj_lastMod" type="hidden" value="<?php echo $this->obj->getLastModified('U'); ?>"></input>
-    <input id='obj_type' type='hidden' value='block'></input>
+    <input class="obj_id" type="hidden" value="<?php echo $this->obj->getId(); ?>"></input>
+    <input class="obj_lastMod" type="hidden" value="<?php echo $this->obj->getLastModified('U'); ?>"></input>
+    <input class='obj_type' type='hidden' value='block'></input>
     <div class="playlist_title">
-        <h3 id="obj_name">
+        <h3 class="obj_name">
             <a id="playlist_name_display" contenteditable="true">
             <?php
                 if (isset($this->unsavedName)) echo $this->unsavedName;
@@ -47,7 +47,7 @@ if (isset($this->obj)) {
             ?>
             </a>
         </h3>
-        <h4 id="obj_length"><?php echo $this->length; ?></h4>
+        <h4 class="obj_length"><?php echo $this->length; ?></h4>
     </div>
     <div id='sp-success-saved' class='success' style='display:none'></div>
 
@@ -80,7 +80,7 @@ if (isset($this->obj)) {
 
     <div class="clear"></div>
     <div class="" style="clear:both; float:none; width:100%;">
-	    <ul id="spl_sortable">
+	    <ul class="spl_sortable">
             <?php $this->contents = $contents;
                 echo $this->render('playlist/update.phtml') ?>
 	    </ul>

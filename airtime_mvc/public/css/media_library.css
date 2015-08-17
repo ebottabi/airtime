@@ -37,7 +37,6 @@
 
 #library_content {
 	float: left;
-	width: 50%;
 	overflow: auto;
 }
 
@@ -59,11 +58,6 @@
     word-wrap: break-word;
 }
 
-#library_display th,
-#library_display td,
-.paginationControl {
-	font-size: 13px;
-}
 
 #library_content .ui-tabs-panel {
 	padding-top:16px;
@@ -167,14 +161,14 @@ td.library_bitrate {
 		}
 	.lib-content fieldset.closed {
 		border-width: 1px 0 0;
-		margin-bottom: -6px;
+		margin-bottom: 0;
 		margin-left: 1px;
 		}
 .dataTables_filter input[type="text"], .dataTables_filter select {
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
-	height: 25px;
+	height: 26px;
 	width:60%;
 	}
 .dataTables_filter label {
@@ -192,13 +186,13 @@ td.library_bitrate {
 		-webkit-box-sizing: border-box;
 		-moz-box-sizing: border-box;
 		box-sizing: border-box;
-		height: 25px;
+		height: 26px;
 		}
 	.search-criteria .criteria-element > div .btn-small {
 		-webkit-box-sizing: border-box;
 		-moz-box-sizing: border-box;
 		box-sizing: border-box;
-		height: 25px;
+		height: 26px;
 		padding: 3px 6px;
 		}
 
@@ -206,7 +200,7 @@ td.library_bitrate {
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
-	height: 25px;
+	height: 26px;
 	vertical-align: middle;
 	margin: 0 !important;
 	line-height: 16px;
@@ -219,7 +213,7 @@ td.library_bitrate {
 	display: inline-block;
 	float: none !important;
 	margin: 0 !important;
-	height: 25px;
+	height: 26px;
 	outline: none;
 	vertical-align: middle !important;
 	}			

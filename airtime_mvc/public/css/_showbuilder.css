@@ -1,0 +1,708 @@
+div.ColVis_collectionBackground {
+    background-color: transparent;
+}
+
+/* ~ Moved to styles.css ~
+
+.wrapper {
+    *//*background: #242424;*//*
+    background: #111;
+    top: 105px;
+    left: 130px;
+    right: 0;
+    bottom: 0;
+    padding: 5px 10px 40px;
+    *//*padding: 0;*//*
+    border: none;
+
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-flow: row wrap;
+    flex-flow: row wrap;
+
+    overflow: auto;
+
+    -webkit-transition: top 0.2s linear, padding 0.2s linear;
+    -moz-transition: top 0.2s linear, padding 0.2s linear;
+    -o-transition: top 0.2s linear, padding 0.2s linear;
+    transition: top 0.2s linear, padding 0.2s linear;
+}
+
+.usability_hint {
+    left: 130px;
+    flex: 0 100%;
+    width: 100%;
+}
+
+*/
+
+/* Scroll bars */
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent none;
+}
+
+.wrapper::-webkit-scrollbar-track {
+    background-color: rgba(255, 93, 26, .2);
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.75);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #ff5d1a;
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 3px rgba(0,0,0,0.75);
+}
+
+::-webkit-scrollbar-corner {
+    background-color: #000;
+}
+
+/* Show Builder*/
+
+.content-pane {
+    position: relative;
+
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+
+    height: 100%;
+
+    border: 1px solid #202020;
+    border-top: 1px solid #353535;
+    border-left: 1px solid #2a2a2a;
+
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.65);
+    -moz-box-shadow: inset 0 0 6px rgba(0,0,0,.65);
+    box-shadow: inset 0 0 6px rgba(0,0,0,.65);
+
+    background-color: #242424;
+}
+
+.wide-panel {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-flow: column;
+    flex-flow: column;
+
+    /* Account for the left pane */
+    flex: 6 auto;
+    min-width: 555px;
+}
+
+.outer-datatable-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+@media screen and (max-width: 1475px) {
+    .wrapper {
+        -webkit-flex-flow: column !important;
+        flex-flow: column !important;
+        padding-top: 10px !important;
+    }
+    .content-pane {
+        height: auto !important;
+        width: 100% !important;
+    }
+    .wide-panel {
+        flex: 8 100%;
+        min-height: 50%;
+    }
+    .usability_hint {
+        left: 0;
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        z-index: 100;
+    }
+    .spl_sortable {
+        max-height: 50%;
+    }
+}
+
+@media screen and (max-width: 555px) {
+    #sb_show_filter {
+        float: none !important;
+        margin-top: 4px;
+    }
+}
+
+/* Library */
+
+#library_title {
+    padding: 5px 5px 0;
+}
+
+#library_content {
+    margin-right: 10px;
+    overflow: hidden !important;
+}
+
+#library_content .dataTables_filter {
+    margin: 0;
+}
+
+#library_content .dataTables_filter input[type="text"], #library_content .dataTables_filter select {
+    height: 26px;
+    margin: 0;
+
+    border: 0;
+    float: left;
+    position: absolute;
+    width: 100%;
+}
+
+#library_content label {
+    padding: 0;
+}
+
+#library_content .dataTables_length {
+    padding: 5px;
+}
+
+#library_content .dataTables_length label {
+    color: #efefef;
+    line-height: 26px;
+    font-weight: normal;
+}
+
+#library_content legend {
+    position: absolute;
+    top: 0;
+
+    padding-top: 4px;
+    font-size: 14px;
+}
+
+#library_content legend, #library_content span {
+    font-weight: normal;
+    color: #efefef;
+}
+
+#library_content .icon-white {
+    margin-right: 4px;
+}
+
+#library_content input[type="checkbox"], #library_content img,
+.sb-content input[type="checkbox"], .sb-content img {
+    position: relative;
+    top: 2px;
+}
+
+div.btn > span {
+    color: red;
+}
+
+.fg-toolbar.ui-toolbar.ui-widget-header.ui-corner-bl.ui-corner-br.ui-helper-clearfix {
+    position: absolute;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    height: 36px;
+}
+
+#library_display_processing {
+    z-index: 1;
+}
+
+#library_display_wrapper, #show_builder_table_wrapper {
+    position: absolute;
+    top: 34px;
+    bottom: 4px;
+    right: 4px;
+    left: 4px;
+}
+
+.dataTables_scrolling {
+    position: absolute;
+    bottom: 37px; /* 36 px is the size of the header/footer + 1px because there's no internal border */
+    top: 37px;
+    left: 0;
+    right: 0;
+}
+
+#library_display, #show_builder_table {
+    border: none;
+}
+
+#library_display_wrapper > .dataTables_scrolling,
+#show_builder_table_wrapper > .dataTables_scrolling {
+    border: 1px solid #5b5b5b;
+}
+
+thead th.ui-state-default {
+    border: solid #666;
+    border-width: 0 0 1px 1px;
+    color: #ccc;
+}
+
+thead th.ui-state-default:not([class*='checkbox']):not([class*='type']):not([class*='image']) {
+    cursor: move;
+}
+
+thead th.ui-state-default:focus {
+    outline: none;
+}
+
+
+/* Library Search */
+
+#filter_options {
+    text-align: center;
+    padding: 15px 0 15px 15px;
+    margin: 0;
+    border: none;
+}
+
+#advanced_search {
+    position: absolute;
+    left: -420px;
+    padding: 5px;
+    margin-top: -2px;
+}
+
+#advanced_search label, #advanced_search span {
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 24px;
+    color: #242424;
+}
+
+#advanced_search .controls {
+    text-align: right;
+}
+
+#advanced_search .control-group {
+    padding: 5px;
+    margin-bottom: 0;
+}
+
+#advanced_search .sp-checked-icon {
+    position: absolute;
+    margin-top: 4px;
+}
+
+#advanced-options {
+    float: right;
+    z-index: 1;
+}
+
+#advanced-options > button {
+    background: transparent none;
+    color: transparent;
+    border: none;
+    padding: 4px 8px 4px 4px;
+    box-shadow: none;
+}
+
+#advanced-options > button:focus {
+    outline-width: 0;
+}
+
+#advanced-options > button > span {
+    border-top: 4px solid #242424;
+}
+
+#library_content > .panel-header {
+    top: 33px;
+}
+
+.panel-header {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    left: 4px;
+    z-index: 1; /* Display above the content wrapper */
+
+    flex: 1 100%;
+}
+
+/* Timeline */
+
+#show_builder {
+    float: right;
+}
+
+#show_builder .fg-toolbar.ui-corner-tl.ui-corner-tr {
+    border-top: none;
+}
+
+.sb-content .dataTables_wrapper {
+    margin: 0;
+}
+
+.sb-padded {
+    padding: 0;
+}
+
+#sb_submit {
+    font-weight: normal;
+    text-decoration: none;
+    padding: 4px;
+    color: #efefef;
+    float: none;
+}
+
+.sb-options-form {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+}
+
+.sb-options-form label {
+    color: #efefef;
+    line-height: 26px;
+}
+
+#sb_show_filter {
+    right: 0;
+    position: absolute;
+}
+
+.nav-tabs {
+    border-bottom: 1px solid #5b5b5b;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-tabs a {
+    padding: 4px 8px !important;
+
+    color: #efefef;
+    font-size: 14px;
+    text-decoration: none;
+
+    background-color: rgba(71,71,71,.5);
+}
+
+.nav-tabs :not(.active) a:hover {
+    background-color: rgba(239, 76, 10, .5) !important;
+    border: 1px solid transparent !important;
+    border-bottom: 1px solid transparent !important;
+}
+
+.nav-tabs > .active > a, .nav-tabs > .active > a:hover {
+    color: #efefef;
+
+    background-color: #474747;
+    border: 1px solid #474747;
+    border-bottom-color: transparent;
+    cursor: default;
+}
+
+.lib_pl_close {
+    cursor: pointer;
+    margin-left: 10px;
+    z-index: 1;
+}
+
+/* Media editors */
+
+textarea {
+    resize: none;
+}
+
+/* File Metadata Editor */
+
+#edit-md-dialog {
+    width: 100%;
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+#edit-md-dialog label {
+    font-size: 14px;
+    font-weight: normal;
+
+    color: #efefef;
+}
+
+#edit-md-dialog .zend_form dt {
+    float: left;
+    width: 40%;
+
+    text-align: right;
+
+    line-height: 20px;
+    margin: 0 0 10px;
+    padding-right: 4px;
+}
+
+#edit-md-dialog .zend_form dd {
+    float: left;
+    width: auto;
+
+    font-size: 14px;
+    margin: 0 0 10px;
+}
+
+/* Playlist/Block/Webstream Editors */
+
+dl > dd > input, dl > dd > textarea {
+    margin: 0;
+}
+
+span.errors.sp-errors {
+    color: #902d2d;
+}
+
+li.ui-state-default {
+    border: 1px solid #7e7e7e;
+}
+
+/* Playlist Editor */
+
+.side_playlist {
+    position: relative;
+    width: 100%; /* Override because we're using flexbox */
+
+    overflow: hidden;
+
+    flex: 1;
+}
+
+.side_playlist h3 {
+    color: #efefef;
+    font-size: 20px;
+}
+
+.side_playlist .playlist_title h3 a:hover {
+     background-color: transparent;
+}
+
+.side_playlist label, .side_playlist h4, .side_playlist span {
+    color: #efefef;
+    font-size: 14px;
+    line-height: 24px;
+    font-weight: normal;
+}
+
+.sb-content fieldset label {
+    font-size: 14px;
+}
+
+.editor_pane_wrapper {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-flow: column;
+    flex-flow: column;
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    top: 4px;
+    left: 4px;
+}
+
+.inner_editor_wrapper {
+    max-height: 60%;
+    overflow-x: hidden;
+    width: 100%;
+    flex: 1 0 100%;
+}
+
+.clearfix:after, .side_playlist li:after {
+    display: none !important;
+}
+
+.spl-no-margin {
+    margin: 0;
+}
+
+.spl-no-margin > div:last-child {
+    margin-left: 0 !important;
+}
+
+.spl_sortable {
+    position: relative;
+    min-height: 0;
+    overflow: auto;
+    flex: 1 100%;
+
+    margin: 4px 0;
+    padding: 0;
+}
+
+.spl_sortable .list-item-container {
+    cursor: move;
+}
+
+.spl_empty {
+    width: 100%;
+
+    color: white;
+    text-align: center;
+    vertical-align: middle;
+
+    font-size: 20px;
+}
+
+.crossfade-main {
+    float: left;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.crossfade-main > dl {
+    padding: 4px;
+}
+
+#save_button, #webstream_save {
+    background: #ff5d1a;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 16px;
+    height: 38px;
+    width: 120px;
+}
+
+#save_button:active, #webstream_save {
+    color: #fff !important;
+}
+
+#save_button:focus, #webstream_save {
+    outline-width: 0;
+}
+
+/* Smart Block Editor */
+
+.btn-toolbar {
+    margin: 0;
+}
+
+.sp-button {
+     margin-left: 0;
+}
+
+.sp-button + .sp-button {
+    margin: 0 5px 0 0;
+}
+
+.side_playlist .zend_form input {
+    box-sizing: border-box;
+    height: 26px;
+}
+
+.smart-block-form input[type='radio'] {
+    vertical-align: bottom;
+    margin: 0 5px -2px;
+}
+
+.smart-block-form input[type='checkbox'] {
+    vertical-align: bottom;
+    margin: 0 4px;
+}
+
+.smart-block-form ~ .btn-toolbar {
+    padding-top: 4px;
+}
+
+/* DataTables */
+
+#show_builder .fg-toolbar > .btn-toolbar,
+#show_builder .ColVis.TableTools {
+    position: absolute;
+    top: 35px;
+}
+
+#show_builder .fg-toolbar > .btn-toolbar {
+    left: 6px;
+    padding: 0;
+}
+
+#show_builder .ColVis.TableTools {
+    right: 6px;
+    margin: 0;
+}
+
+.ColVis_collection.TableTools_collection.ui-buttonset.ui-buttonset-multi {
+    max-height: 50%;
+    overflow: auto;
+}
+
+.ColVis.TableTools {
+    margin: 5px 5px 0 0;
+}
+
+.ColVis.TableTools > button {
+    padding: 3px 9px;
+}
+
+.ColVis_title {
+    color: #000;
+}
+
+/* Hacky stuff here */
+#show_builder .dataTables_scrolling {
+    top: 66px;
+}
+
+.sb-padded > .fg-toolbar {
+    height: 66px;
+}
+
+.fg-toolbar .btn-toolbar {
+    margin: 0;
+    padding: 5px;
+}
+/* ~~~~~~~~~~~~~~~~ */
+
+#library_display td, #show_builder td {
+    font-size: 14px;
+}
+
+#library_display td > span > span,
+#show_builder td > span > span {
+    color: #efefef;
+}
+
+.datatable tr td[class*='checkbox'], .datatable tr td[class*='type'] {
+    text-align: center;
+}
+
+.datatable tr td {
+    text-align: left;
+}
+
+th.library_checkbox {
+    text-align: center !important;
+}
+
+
+/* This is so dragged items show up above the layout */
+
+.ui-draggable-dragging {
+    z-index: 9999;
+    position: fixed !important;
+}
+
+/* Since the z-index gets applied dynamically to the  */
+#ui-datepicker-div {
+    z-index: 1000 !important;
+}
+
+.datatable .ui-state-highlight, .spl_sortable .ui-state-highlight {
+    background: rgba(255, 93, 26, .6);
+    border: none;
+}
+

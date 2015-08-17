@@ -232,10 +232,10 @@ class LocaleController extends Zend_Controller_Action
             "Oct" => _("Oct"),
             "Nov" => _("Nov"),
             "Dec" => _("Dec"),
-            "today" => _("today"),
-            "day" => _("day"),
-            "week" => _("week"),
-            "month" => _("month"),
+            "Today" => _("Today"),
+            "Day" => _("Day"),
+            "Week" => _("Week"),
+            "Month" => _("Month"),
             "Sunday" => _("Sunday"),
             "Monday" => _("Monday"),
             "Tuesday" => _("Tuesday"),
@@ -291,7 +291,7 @@ class LocaleController extends Zend_Controller_Action
             //"Select" => _("Select"),
             "Select all" => _("Select all"),
             "Select none" => _("Select none"),
-            "Remove overbooked tracks" => _("Remove overbooked tracks"),
+            "Trim overbooked shows" => _("Trim overbooked shows"),
             "Remove selected scheduled items" => _("Remove selected scheduled items"),
             "Jump to the current playing track" => _("Jump to the current playing track"),
             "Cancel current show" => _("Cancel current show"),
@@ -391,7 +391,27 @@ class LocaleController extends Zend_Controller_Action
             "No Show" => _("No Show"),
             "All" => _("All"),
             "Copied %s row%s to the clipboard" => _("Copied %s row%s to the clipboard"),
-            "%sPrint view%sPlease use your browser's print function to print this table. Press escape when finished." => _("%sPrint view%sPlease use your browser's print function to print this table. Press escape when finished.")
+            "%sPrint view%sPlease use your browser's print function to print this table. Press escape when finished." => _("%sPrint view%sPlease use your browser's print function to print this table. Press escape when finished."),
+            "New Show" => _("New Show"),
+            "New Log Entry" => _("New Log Entry"),
+            //Datatables:
+            "No data available in table",
+            "Showing _START_ to _END_ of _TOTAL_ entries",
+            "Showing 0 to 0 of 0 entries",
+            "(filtered from _MAX_ total entries)",
+            "",
+            ",",
+            "Show _MENU_",
+            "Loading...",
+            "Processing...",
+            "No matching records found",
+            "First",
+            "Last",
+            "Next",
+            "Previous",
+            ": activate to sort column ascending",
+            ": activate to sort column descending"
+            //End of datatables
         );
         $this->view->layout()->disableLayout();
         $this->_helper->viewRenderer->setNoRender(true);

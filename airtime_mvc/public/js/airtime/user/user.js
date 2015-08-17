@@ -39,7 +39,8 @@ function populateForm(entries){
 function rowClickCallback(row_id){
       $.ajax({ url: baseUrl+'User/get-user-data/id/'+ row_id +'/format/json', dataType:"json", success:function(data){
         populateForm(data.entries);
-	  }});    
+          $("#user_details").css("visibility", "visible");
+	  }});
 }
 
 function removeUserCallback(row_id, nRow){
@@ -103,8 +104,14 @@ function populateUserTable() {
         "bJQueryUI": true,
         "bAutoWidth": false,
         "bLengthChange": false,
-        "oLanguage": datatables_dict,
-        
+        "oLanguage": getDatatablesStrings({
+            "sEmptyTable": $.i18n._("No users were found."),
+            "sEmptyTable":     $.i18n._("No users found"),
+            "sZeroRecords":    $.i18n._("No matching users found"),
+            "sInfo":           $.i18n._("Showing _START_ to _END_ of _TOTAL_ users"),
+            "sInfoEmpty":      $.i18n._("Showing 0 to 0 of 0 users"),
+            "sInfoFiltered":   $.i18n._("(filtered from _MAX_ total users)"),
+        }),
         "sDom": '<"H"lf<"dt-process-rel"r>>t<"F"ip>',
     });
 }
@@ -193,12 +200,25 @@ $(document).ready(function() {
             return $('#user-type-'+$(this).val()).attr('user-rights');
         }
     });
-    
+
+    var table = $("#users_datable");//.DataTable();
+    $('.datatable tbody').on( 'click', 'tr', function () {
+        $(this).parent().find('tr.selected').removeClass('selected');
+        $(this).addClass('selected');
+    } );
+
+    $('#button').click( function () {
+        table.row('.selected').remove().draw( false );
+    } );
+
     $('#type').tipsy('show');
     
     var newUser = {login:"", first_name:"", last_name:"", type:"G", id:""};
     
-    $('#add_user_button').live('click', function(){populateForm(newUser);});
+    $('#add_user_button').live('click', function(){
+        populateForm(newUser);
+        $("#user_details").css("visibility", "visible");
+    });
     
     $('#save_user').live('click', function(){
         var data = $('#user_form').serialize();

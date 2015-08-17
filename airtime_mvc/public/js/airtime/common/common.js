@@ -1,5 +1,6 @@
 var previewWidth = 482,
-    previewHeight = 110;
+    previewHeight = 110,
+    USABILITY_HINT_PADDING = 40;
 
 $(document).ready(function() {
 
@@ -12,6 +13,9 @@ $(document).ready(function() {
 
     //this statement tells the browser to fade out any success message after 5 seconds
     setTimeout(function(){$(".success").fadeOut("slow", function(){$(this).empty()});}, 5000);
+    if ($('.usability_hint').is(':visible')) {
+        $(".wrapper").css("padding-top", USABILITY_HINT_PADDING); // Account for usability hint
+    }
 });
 
 /*
@@ -58,6 +62,35 @@ var i18n_days_short = [
     $.i18n._("Sa")
 ];
 
+function getDatatablesStrings(overrideDict) {
+
+    var dict = {
+        "sEmptyTable":     $.i18n._("No data available in table"),
+        "sInfo":           $.i18n._("Showing _START_ to _END_ of _TOTAL_ entries"),
+        "sInfoEmpty":      $.i18n._("Showing 0 to 0 of 0 entries"),
+        "sInfoFiltered":   $.i18n._("(filtered from _MAX_ total entries)"),
+        "sInfoPostFix":    $.i18n._(""),
+        "sInfoThousands":  $.i18n._("),"),
+        "sLengthMenu":     $.i18n._("Show _MENU_"),
+        "sLoadingRecords": $.i18n._("Loading..."),
+        "sProcessing":     $.i18n._("Processing..."),
+        "sSearch":         $.i18n._(""),
+        "sZeroRecords":    $.i18n._("No matching records found"),
+        "oPaginate": {
+        "sFirst":    $.i18n._("First"),
+            "sLast":     $.i18n._("Last"),
+            "sNext":     $.i18n._("Next"),
+            "sPrevious": $.i18n._("Previous")
+        },
+        "oAria": {
+        "sSortAscending":  $.i18n._(": activate to sort column ascending"),
+            "sSortDescending": $.i18n._(": activate to sort column descending")
+        }
+    };
+
+    return $.extend({}, dict, overrideDict);
+}
+
 function adjustDateToServerDate(date, serverTimezoneOffset){
     //date object stores time in the browser's localtime. We need to artificially shift 
     //it to 
@@ -82,8 +115,8 @@ function openAudioPreview(p_event) {
     p_event.stopPropagation();
     
     var audioFileID = $(this).attr('audioFile');
-    var objId = $('#obj_id:first').attr('value');
-    var objType = $('#obj_type:first').attr('value');
+    var objId = $('.obj_id:first').attr('value');
+    var objType = $('.obj_type:first').attr('value');
     var playIndex = $(this).parent().parent().attr('id');
     playIndex = playIndex.substring(4); //remove the spl_
     
@@ -162,6 +195,17 @@ function removeSuccessMsg() {
     $status.fadeOut("slow", function(){$status.empty()});
 }
 
+function hideHint(h) {
+    h.hide("slow").addClass("hidden");
+    $(".wrapper").css("padding-top", 10);
+}
+
+function showHint(h) {
+    console.log("test");
+    h.show("slow").removeClass("hidden");
+    $(".wrapper").css("padding-top", USABILITY_HINT_PADDING); // Account for usability hint
+}
+
 function getUsabilityHint() {
     var pathname = window.location.pathname;
     $.getJSON("/api/get-usability-hint", {"format": "json", "userPath": pathname}, function(json) {
@@ -169,20 +213,26 @@ function getUsabilityHint() {
         var current_hint = $hint_div.html();
         if (json === "") {
             // there are no more hints to display to the user
-            $hint_div.hide();
+            hideHint($hint_div);
         } else if (current_hint !== json) {
             // we only change the message if it is new
             if ($hint_div.is(":visible")) {
-                $hint_div.hide();
+                hideHint($hint_div);
             }
             $hint_div.html(json);
-            $hint_div.show("slow");
-
+            showHint($hint_div);
         } else {
             // hint is the same before we hid it so we just need to show it
             if ($hint_div.is(":hidden")) {
-                $hint_div.show();
+                showHint($hint_div);
             }
         }
     });
 }
+
+$(document).mouseup(function (e) {
+    var mb = $("#menu-btn"), w = $(window).width();
+    if (!mb.is(e.target) && mb.has(e.target).length === 0 && w <= 970) {
+        $('#nav').find('.responsive-menu').slideUp();
+    }
+});
