@@ -145,6 +145,8 @@ function dayClick(date, allDay, jsEvent, view){
             selectCalendarEvents([newEvent]);
 
             openAddShowForm();
+            makeAddShowButton();
+            toggleAddShowButton();
         }
         return false; //Prevents text highlighting
     }
@@ -161,6 +163,18 @@ function setShowFormTimes(startMoment, endMoment)
     $("#add_show_end_date").val(endDateString);
     $("#add_show_start_time").val(startTimeString)
     $("#add_show_end_time").val(endTimeString)
+
+    //TODO: This should all be refactored into a proper initialize() function for the show form.
+    $("#add_show_start_now-future").attr('checked', 'checked');
+    $("#add_show_start_now-now").removeProp('disabled');
+    setupStartTimeWidgets(); //add-show.js
+    /*
+    if(view.name !== "month") {
+        var endTimeString = pad(endDateTime.getHours(),2)+":"+pad(endDateTime.getMinutes(),2);
+        $("#add_show_start_time").val(startTime_string)
+        $("#add_show_end_time").val(endTimeString)
+    }*/
+
 }
 
 function eventClick(event, jsEvent, view) {
@@ -424,6 +438,7 @@ function getFullCalendarEvents(start, end, callback) {
         var d = new Date();
             $.post(url, {format: "json", start: start_date, end: end_date, cachep: d.getTime()}, function(json){
                 callback(json.events);
+                getUsabilityHint();
             });
     }
 }
