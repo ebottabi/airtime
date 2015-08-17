@@ -177,11 +177,17 @@ function setShowFormTimes(startMoment, endMoment)
 
 }
 
+
 function eventClick(event, jsEvent, view) {
     selectCalendarEvents([event]);
 
     //Crappy context-menu hack:
-    //$('.event-selected').contextMenu();
+    $('.event-selected').contextMenu(/*{
+            position: function(opt, x, y) {
+                return {x: jsEvent.pageX, y: jsEvent.pageY};
+                //opt.$menu.css({top: jsEvent.pageY, left: jsEevnt.pageX});
+            }
+    }*/);
 }
 
 function viewDisplay( view ) {

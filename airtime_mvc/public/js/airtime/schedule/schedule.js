@@ -334,7 +334,7 @@ $(document).ready(function() {
         trigger: "custom",
         ignoreRightClick: true,
         className: 'calendar-context-menu',
-        
+
         build: function($el, e) {
             var data, 
                 items, 
