@@ -30,7 +30,7 @@ function makeAddShowButton() {
         $('.fc-header-left')
             .prepend('<span class="fc-header-space"></span>')
             .prepend('<span class="btn-group">' +
-                        '<button onclick="showForm()" class="add-button btn btn-small">' +
+                        '<button onclick="showForm()" class="add-button btn btn-small btn-new">' +
                             '<i class="icon-white icon-plus"></i>' +
                             '<span>' + $.i18n._("New Show") + '</span>' +
                         '</button>' +
@@ -226,7 +226,9 @@ function intToRGB(i){
 
 function stringToColor(s)
 {
-    return intToRGB(hashCode(s));
+    var palette = ['d56f42', 'aad542', '7242d5', '42d563', 'd542be'];
+    return palette[Math.abs(hashCode(s)) % palette.length];
+    //return intToRGB(hashCode(s));
 }
 
 function getContrastYIQ(hexcolor){

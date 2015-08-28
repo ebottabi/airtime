@@ -1,71 +1,3 @@
-div.ColVis_collectionBackground {
-    background-color: transparent;
-}
-
-/* ~ Moved to styles.css ~
-
-.wrapper {
-    *//*background: #242424;*//*
-    background: #111;
-    top: 105px;
-    left: 130px;
-    right: 0;
-    bottom: 0;
-    padding: 5px 10px 40px;
-    *//*padding: 0;*//*
-    border: none;
-
-    display: -webkit-box;
-    display: -moz-box;
-    display: -ms-flexbox;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-flow: row wrap;
-    flex-flow: row wrap;
-
-    overflow: auto;
-
-    -webkit-transition: top 0.2s linear, padding 0.2s linear;
-    -moz-transition: top 0.2s linear, padding 0.2s linear;
-    -o-transition: top 0.2s linear, padding 0.2s linear;
-    transition: top 0.2s linear, padding 0.2s linear;
-}
-
-.usability_hint {
-    left: 130px;
-    flex: 0 100%;
-    width: 100%;
-}
-
-*/
-
-/* Scroll bars */
-
-::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent none;
-}
-
-.wrapper::-webkit-scrollbar-track {
-    background-color: rgba(255, 93, 26, .2);
-    border-radius: 10px;
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.75);
-}
-
-::-webkit-scrollbar-thumb {
-    background-color: #ff5d1a;
-    border-radius: 10px;
-    -webkit-box-shadow: inset 0 0 3px rgba(0,0,0,0.75);
-}
-
-::-webkit-scrollbar-corner {
-    background-color: #000;
-}
-
 /* Show Builder*/
 
 .content-pane {
@@ -88,45 +20,14 @@ div.ColVis_collectionBackground {
     background-color: #242424;
 }
 
-.wide-panel {
-    display: -webkit-box;
-    display: -moz-box;
-    display: -ms-flexbox;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-flow: column;
-    flex-flow: column;
-
-    /* Account for the left pane */
-    flex: 6 auto;
-    min-width: 555px;
-}
-
-.outer-datatable-wrapper {
-    position: relative;
-    flex: 1;
-}
-
-@media screen and (max-width: 1475px) {
+@media screen and (max-width: 1280px) {
     .wrapper {
         -webkit-flex-flow: column !important;
         flex-flow: column !important;
-        padding-top: 10px !important;
     }
     .content-pane {
         height: auto !important;
         width: 100% !important;
-    }
-    .wide-panel {
-        flex: 8 100%;
-        min-height: 50%;
-    }
-    .usability_hint {
-        left: 0;
-        top: auto;
-        bottom: 0;
-        width: 100%;
-        z-index: 100;
     }
     .spl_sortable {
         max-height: 50%;
@@ -226,14 +127,6 @@ div.btn > span {
     left: 4px;
 }
 
-.dataTables_scrolling {
-    position: absolute;
-    bottom: 37px; /* 36 px is the size of the header/footer + 1px because there's no internal border */
-    top: 37px;
-    left: 0;
-    right: 0;
-}
-
 #library_display, #show_builder_table {
     border: none;
 }
@@ -241,6 +134,35 @@ div.btn > span {
 #library_display_wrapper > .dataTables_scrolling,
 #show_builder_table_wrapper > .dataTables_scrolling {
     border: 1px solid #5b5b5b;
+}
+
+#library_empty_image {
+    opacity: .3;
+
+    top: -20px;
+    margin-top: -2px;
+    padding-right: 2px; /* For the webstream icon */
+}
+
+#library_empty {
+    display: none;
+    font-size: 16px;
+    position: absolute;
+    width: 100%;
+    top: 44%;
+    text-align: center;
+    color: #efefef;
+}
+
+#library_empty a {
+    font-size: 0.9em;
+    line-height: 37px;
+    text-decoration: none;
+    color: #FF5D1A;
+}
+
+#library_empty a:visited {
+    color: #CE3C01;
 }
 
 thead th.ui-state-default {
@@ -272,6 +194,7 @@ thead th.ui-state-default:focus {
     left: -420px;
     padding: 5px;
     margin-top: -2px;
+    z-index: 1005;
 }
 
 #advanced_search label, #advanced_search span {
@@ -297,7 +220,7 @@ thead th.ui-state-default:focus {
 
 #advanced-options {
     float: right;
-    z-index: 1;
+    z-index: 1004;
 }
 
 #advanced-options > button {
@@ -492,6 +415,7 @@ li.ui-state-default {
     font-size: 14px;
     line-height: 24px;
     font-weight: normal;
+    text-align: right;
 }
 
 .sb-content fieldset label {
@@ -513,11 +437,29 @@ li.ui-state-default {
     left: 4px;
 }
 
+[data-tab-type='md'] > .editor_pane_wrapper {
+    overflow-x: hidden; /* Show the y-direction scrollbar (magic!) */
+}
+
 .inner_editor_wrapper {
     max-height: 60%;
     overflow-x: hidden;
     width: 100%;
     flex: 1 0 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.inner_editor_title h2 {
+    margin: 10px 0 0 10px;
+    width: 85%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.inner_editor_title span {
+    font-size: inherit;
+    line-height: inherit;
 }
 
 .clearfix:after, .side_playlist li:after {
@@ -528,18 +470,29 @@ li.ui-state-default {
     margin: 0;
 }
 
-.spl-no-margin > div:last-child {
+.spl-no-margin > div:first-child {
     margin-left: 0 !important;
+}
+
+.spl-no-r-margin {
+    margin-right: 0px;
 }
 
 .spl_sortable {
     position: relative;
-    min-height: 0;
+    height: 100%;
     overflow: auto;
     flex: 1 100%;
 
     margin: 4px 0;
-    padding: 0;
+    min-height: 0;
+    padding: 5px;
+    border: 1px solid #444;
+    border-radius: 3px;
+    box-sizing: border-box;
+    background-color: #111;
+    display: flex;
+    flex-direction: column;
 }
 
 .spl_sortable .list-item-container {
@@ -549,11 +502,16 @@ li.ui-state-default {
 .spl_empty {
     width: 100%;
 
-    color: white;
+    color: #efefef;
     text-align: center;
-    vertical-align: middle;
 
     font-size: 20px;
+
+    flex: 1 1 auto;
+    /* Position the text label inside it centered*/
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
 }
 
 .crossfade-main {
@@ -567,21 +525,12 @@ li.ui-state-default {
     padding: 4px;
 }
 
-#save_button, #webstream_save {
-    background: #ff5d1a;
-    color: #fff;
-    border-radius: 4px;
-    font-size: 16px;
-    height: 38px;
-    width: 120px;
-}
-
-#save_button:active, #webstream_save {
-    color: #fff !important;
-}
-
 #save_button:focus, #webstream_save {
     outline-width: 0;
+}
+
+#edit-md-dialog .zend_form dd:last-child {
+    width: 160px;
 }
 
 /* Smart Block Editor */
@@ -633,6 +582,10 @@ li.ui-state-default {
 #show_builder .ColVis.TableTools {
     right: 6px;
     margin: 0;
+}
+
+div.ColVis_collectionBackground {
+    background-color: transparent;
 }
 
 .ColVis_collection.TableTools_collection.ui-buttonset.ui-buttonset-multi {
@@ -691,18 +644,25 @@ th.library_checkbox {
 
 /* This is so dragged items show up above the layout */
 
-.ui-draggable-dragging {
+#library_display .ui-draggable-dragging {
     z-index: 9999;
     position: fixed !important;
 }
 
-/* Since the z-index gets applied dynamically to the  */
-#ui-datepicker-div {
-    z-index: 1000 !important;
-}
+/* Since the z-index gets applied dynamically */
+/*#ui-datepicker-div {*/
+    /*z-index: 1000 !important;*/
+/*}*/
 
 .datatable .ui-state-highlight, .spl_sortable .ui-state-highlight {
     background: rgba(255, 93, 26, .6);
     border: none;
 }
 
+.dataTables_scrolling {
+    position: absolute;
+    bottom: 37px; /* 36 px is the size of the header/footer + 1px because there's no internal border */
+    top: 37px;
+    left: 0;
+    right: 0;
+}

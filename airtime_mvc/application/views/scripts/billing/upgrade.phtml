@@ -120,17 +120,43 @@ function configureByCountry(countryCode)
 	});
 }
 
+function promoEligibilityCheck()
+{
+    var newproductid = $("input[type='radio'][name='newproductid']:checked").val();
+
+    // newproductid can be undefined if the client is currently on an old plan
+    // and they just change the billing cycle value without selecting a new plan type.
+    // In this case, let's not check if they are eligible for the promo because
+    // they won't be able to upgrade without selecting a new plan first.
+    if (newproductid === undefined) {
+        return;
+    }
+    var newproductbillingcycle = $("input[type='radio'][name='newproductbillingcycle']:checked").val();
+
+    $.post("/billing/promo-eligibility-check", {"newproductid": newproductid,
+        "newproductbillingcycle": newproductbillingcycle, "csrf_token": $("#csrf").attr('value')})
+        .success(function(data) {
+            if (data.result == true) {
+                $("#promo-plan-eligible").show();
+            } else if ($("#promo-plan-eligible").is(":visible")) {
+                $("#promo-plan-eligible").hide();
+            }
+    });
+}
+
 $(document).ready(function() {
 	
 	configureByCountry($("#country").val());
 	recalculateTotals();
-    
+
     $("input[name='newproductid']").change(function() {
         validatePlan();
         recalculateTotals();
+        promoEligibilityCheck();
     });
     $("input[name='newproductbillingcycle']").change(function() {
     	recalculateTotals();
+        promoEligibilityCheck();
     });
 
     $("#country").change(function() {
@@ -167,16 +193,20 @@ $(document).ready(function() {
 });
 </script>
 
-<div class="ui-widget ui-widget-content block-shadow clearfix padded-strong billing-panel">
+<div class="ui-widget prefpanel clearfix padded-strong billing-panel">
 <H2><?=_("Account Plans")?></H2>
 <H4><?=_("Upgrade today to get more listeners and storage space!")?></H4>
+<div>
+        <a href="https://www.airtime.pro/pricing#promo-details" target="_blank">
+            <img width="400px" height="133px" class="promo-banner" /></a>
+    </div>
 <div class="pricing-grid">
     <table>
         <tr>
-            <th>Hobbyist</th>
-            <th>Starter</th>
-            <th>Plus</th>
-            <th>Premium</th>
+            <th>Awesome Hobbyist</th>
+            <th>Awesome Starter</th>
+            <th>Awesome Plus</th>
+            <th>Awesome Premium</th>
         </tr>
         <tr>
             <td>1 Stream
@@ -185,7 +215,7 @@ $(document).ready(function() {
             </td>
             <td>2 Streams
             </td>
-            <td>3 Streams
+            <td class="last-column">3 Streams
             </td>
         </tr> 
         <tr>
@@ -195,27 +225,43 @@ $(document).ready(function() {
             </td>
             <td>64kbps and 196kbps Stream Quality
             </td>
-            <td>64kbps, 128kbps, and 196kbps Stream Quality
+            <td class="last-column">64kbps, 128kbps, and 196kbps Stream Quality
             </td>
         </tr> 
-        <tr>
-            <td>5 Listeners
+        <tr class="august-promo">
+            <td>
+                <span>5 Listeners</span><br>
+                <div>10 Listeners</div>
             </td>
-            <td>40 Listeners per stream
+            <td>
+                <span>40 Listeners per stream</span><br>
+                <div>80 Listeners per stream</div>
             </td>
-            <td>100 Listeners per stream
+            <td>
+                <span>100 Listeners per stream</span><br>
+                <div>200 Listeners per stream</div>
             </td>
-            <td>500 Listeners per stream
+            <td class="last-column">
+                <span>500 Listeners per stream</span><br>
+                <div>1000 Listeners per stream</div>
             </td>
         </tr> 
-        <tr>
-            <td>2GB Storage
+        <tr class="august-promo">
+            <td>
+                <span>2GB Storage</span><br>
+                <div>4GB Storage</div>
             </td>
-            <td>5GB Storage
+            <td>
+                <span>5GB Storage</span><br>
+                <div>10GB Storage</div>
             </td>
-            <td>30GB Storage
+            <td>
+                <span>30GB Storage</span><br>
+                <div>60GB Storage</div>
             </td>
-            <td>150GB Storage
+            <td class="last-column">
+                <span>150GB Storage</span><br>
+                <div>300GB Storage</div>
             </td>
         </tr> 
         <tr>
@@ -225,7 +271,7 @@ $(document).ready(function() {
             </td>
             <td>Live Chat, Ticket, Email, Forum Support
             </td>
-            <td>Live Chat, Ticket, Email, Forum Support
+            <td class="last-column">Live Chat, Ticket, Email, Forum Support
             </td>
         </tr> 
         <tr>
@@ -235,17 +281,17 @@ $(document).ready(function() {
             </td>
             <td>Save 15% if paid annually
             </td>
-            <td>Save 15% if paid annually
+            <td class="last-column">Save 15% if paid annually
             </td>
         </tr> 
-        <tr class="price">
+        <tr class="price last-row">
             <td id="hobbyist_grid_price">
             </td>
             <td id="starter_grid_price">
             </td>
             <td id="plus_grid_price">
             </td>
-            <td id="premium_grid_price">
+            <td class="last-column" id="premium_grid_price">
             </td>
         </tr> 
     </table>
@@ -253,7 +299,7 @@ $(document).ready(function() {
 <!-- 
 <p> <a target="_blank" href="https://www.airtime.pro/pricing"><?=_("View Plans")?></a> (Opens in a new window)</p>
  -->
-<p id="current_plan"><b>Current Plan:</b> 
+<p id="current_plan"><span>Your Current Plan:</span>
 <?php 
 $currentProduct = Billing::getClientCurrentAirtimeProduct();
 echo($currentProduct["name"]);
@@ -264,6 +310,8 @@ echo($currentProduct["name"]);
 <h3>Choose a plan:</h3>
  <form id="<?php echo $form->getId(); ?>" method="<?php echo $form->getMethod() ?>" action="<?php echo
     $form->getAction()?>" enctype="<?php echo $form->getEncType();?>">
+
+     <?php echo $form->csrf ?>
     
     <div id="plantype">
         <?php echo $form->newproductid ?>
@@ -274,6 +322,10 @@ echo($currentProduct["name"]);
     <div id="billingcycle_disclaimer">
     Save 15% on annual plans (Hobbyist plan excluded).
     </div>
+     <div class="clearfix"></div>
+     <div id="promo-plan-eligible" style="display:none;">
+         Congratulations, you are eligible for an Awesome Promotional Plan!
+     </div>
     <div class="clearfix"></div>
     <div id="subtotal_box">
         <b>Subtotal:</b><br>
@@ -356,6 +408,10 @@ echo($currentProduct["name"]);
     <div id="paymentmethod">
         <?php echo $form->paymentmethod ?>
     </div>
+     <!-- PayPal Logo --><table border="0" cellpadding="10" cellspacing="0"><tr><td></td></tr><tr><td align="center"><img src="https://www.paypalobjects.com/webstatic/en_CA/mktg/logo-image/bdg_secured_by_pp_2line.png" border="0" alt="Secured by PayPal"></td></tr></table><!-- PayPal Logo -->
+     <div>
+     <img src="https://www.2checkout.com/upload/images/paymentlogoshorizontal.png" alt="2Checkout.com is a worldwide leader in online payment services" />
+     </div>
     
     <div class="clearfix"></div>
     <div id="total_box">
@@ -364,7 +420,7 @@ echo($currentProduct["name"]);
         <b>Total:</b> <span id="total"></span>
     </div>
     
-    <input type="submit" value="Submit Order" id="atpro_submitorder"></input>
+    <input type="submit" class="btn right-floated" value="Submit Order" id="atpro_submitorder"></input>
     <div class="clearfix"></div>
 </form>
 </div>

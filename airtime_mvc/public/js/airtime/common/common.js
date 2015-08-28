@@ -1,6 +1,5 @@
 var previewWidth = 482,
-    previewHeight = 110,
-    USABILITY_HINT_PADDING = 40;
+    previewHeight = 110;
 
 $(document).ready(function() {
 
@@ -13,9 +12,6 @@ $(document).ready(function() {
 
     //this statement tells the browser to fade out any success message after 5 seconds
     setTimeout(function(){$(".success").fadeOut("slow", function(){$(this).empty()});}, 5000);
-    if ($('.usability_hint').is(':visible')) {
-        $(".wrapper").css("padding-top", USABILITY_HINT_PADDING); // Account for usability hint
-    }
 });
 
 /*
@@ -62,6 +58,11 @@ var i18n_days_short = [
     $.i18n._("Sa")
 ];
 
+var dateStartId = "#sb_date_start",
+    timeStartId = "#sb_time_start",
+    dateEndId = "#sb_date_end",
+    timeEndId = "#sb_time_end";
+
 function getDatatablesStrings(overrideDict) {
 
     var dict = {
@@ -73,7 +74,8 @@ function getDatatablesStrings(overrideDict) {
         "sInfoThousands":  $.i18n._("),"),
         "sLengthMenu":     $.i18n._("Show _MENU_"),
         "sLoadingRecords": $.i18n._("Loading..."),
-        "sProcessing":     $.i18n._("Processing..."),
+        //"sProcessing":     $.i18n._("Processing..."),
+        "sProcessing":     $.i18n._(""),
         "sSearch":         $.i18n._(""),
         "sZeroRecords":    $.i18n._("No matching records found"),
         "oPaginate": {
@@ -185,6 +187,31 @@ function openPreviewWindow(url, w, h) {
     return false;
 }
 
+function validateTimeRange() {
+    var oRange,
+        inputs = $('.sb-timerange > input'),
+        start, end;
+
+    oRange = AIRTIME.utilities.fnGetScheduleRange(dateStartId, timeStartId, dateEndId, timeEndId);
+
+    start = oRange.start;
+    end = oRange.end;
+
+    if (end >= start) {
+        inputs.removeClass('error');
+    } else {
+        if (!inputs.hasClass('error')) {
+            inputs.addClass('error');
+        }
+    }
+
+    return {
+        start: start,
+        end: end,
+        isValid: end >= start
+    };
+}
+
 function pad(number, length) {
     return sprintf("%'0"+length+"d", number);
 }
@@ -197,18 +224,15 @@ function removeSuccessMsg() {
 
 function hideHint(h) {
     h.hide("slow").addClass("hidden");
-    $(".wrapper").css("padding-top", 10);
 }
 
 function showHint(h) {
-    console.log("test");
     h.show("slow").removeClass("hidden");
-    $(".wrapper").css("padding-top", USABILITY_HINT_PADDING); // Account for usability hint
 }
 
 function getUsabilityHint() {
     var pathname = window.location.pathname;
-    $.getJSON("/api/get-usability-hint", {"format": "json", "userPath": pathname}, function(json) {
+    $.getJSON(baseUrl + "api/get-usability-hint", {"format": "json", "userPath": pathname}, function(json) {
         var $hint_div = $('.usability_hint');
         var current_hint = $hint_div.html();
         if (json === "") {
@@ -230,9 +254,3 @@ function getUsabilityHint() {
     });
 }
 
-$(document).mouseup(function (e) {
-    var mb = $("#menu-btn"), w = $(window).width();
-    if (!mb.is(e.target) && mb.has(e.target).length === 0 && w <= 970) {
-        $('#nav').find('.responsive-menu').slideUp();
-    }
-});
