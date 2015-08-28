@@ -124,9 +124,6 @@ function dayClick(date, allDay, jsEvent, view){
 
             setShowFormTimes(startMoment, endMoment);
             $("#schedule-show-when").show();
-
-            console.log(startMoment.toDate())
-            console.log(endMoment.toDate());
             //$('#schedule_calendar').fullCalendar('select', startTime, endMoment.toString());
 
             var newEvent = {
@@ -137,7 +134,7 @@ function dayClick(date, allDay, jsEvent, view){
                 editable: true,
                 overlap: false,
                 allDay: false,
-                className: ['event-placeholder']
+                className: ['event-placeholder context-menu-disabled']
             };
 
             $('#schedule_calendar').fullCalendar('renderEvent', newEvent, false);
@@ -158,6 +155,9 @@ function setShowFormTimes(startMoment, endMoment)
     var startTimeString = startMoment.format("HH:mm");
     var endDateString = endMoment.format('YYYY-MM-DD');
     var endTimeString = endMoment.format("HH:mm");
+    var duration = moment(endMoment).subtract(startMoment);
+    var durationString = duration.format("HH") + "h " + duration.format("mm") + "m";
+    $('#add_show_duration').val(durationString);
     $("#add_show_start_date").val(startDateString);
     $("#add_show_end_date_no_repeat").val(endDateString);
     $("#add_show_end_date").val(endDateString);
@@ -367,7 +367,6 @@ function eventDrop(event, dayDelta, minuteDelta, allDay, revertFunc, jsEvent, ui
     var url = baseUrl+'Schedule/move-show/format/json';
     
     if (event.id == PLACEHOLDER_EVENT_ID) {
-        console.log('placeholder dropped')
         setShowFormTimes(moment(event.start), moment(event.end));
         return;
     }
@@ -395,7 +394,6 @@ function eventDrop(event, dayDelta, minuteDelta, allDay, revertFunc, jsEvent, ui
 function eventResize( event, dayDelta, minuteDelta, revertFunc, jsEvent, ui, view ) {
 
     if (event.id == PLACEHOLDER_EVENT_ID) {
-        console.log('placeholder resized')
         setShowFormTimes(moment(event.start), moment(event.end));
         return;
     }
@@ -417,7 +415,7 @@ function eventResize( event, dayDelta, minuteDelta, revertFunc, jsEvent, ui, vie
         });
 }
 
-function windowResize() {	
+function windowResize() {
 	// 200 px for top dashboard and 50 for padding on main content
 	// this calculation was copied from schedule.js line 326
 	var mainHeight = $(window).height() - 200 - 24;
@@ -660,7 +658,6 @@ function selectCalendarEvents(events)
         } else {
             event["className"] = ["event-selected"];
         }
-        console.log(event.className);
 
     });
 

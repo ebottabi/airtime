@@ -368,7 +368,9 @@ function createFullCalendar(data){
         eventDrop: eventDrop,
         eventResize: eventResize,
         windowResize: windowResize,
-        eventClick: eventClick
+        //eventClick: eventClick --> Work in progress item selection for calendar view.
+        //                           Be sure to change the contextMenu trigger below to "custom". -- Albert
+
         /*
         selectable: true,
         selectHelper: true,
@@ -391,7 +393,8 @@ $(document).ready(function() {
 
     $.contextMenu({
         selector: 'div.fc-event',
-        trigger: "custom",
+        trigger: "left",
+        //trigger: "custom",
         ignoreRightClick: true,
         className: 'calendar-context-menu',
 
@@ -401,7 +404,7 @@ $(document).ready(function() {
                 callback;
             
             data = $el.data("event");
-            
+
             function processMenuItems(oItems) {
                 
                 //define a schedule callback.
