@@ -73,7 +73,8 @@ function dayClick(date, allDay, jsEvent, view){
             //remove the +show button if it exists.
             if(addShow.length == 1){
                  var span = $(addShow).parent();
-                $(span).prev().remove();
+
+                $(span).next().remove();
                 $(span).remove();
             }
 
