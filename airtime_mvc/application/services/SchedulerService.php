@@ -485,4 +485,103 @@ class Application_Service_SchedulerService
     	
     	return $redraw;
     }
+
+    public static function createQuickShow()
+    {
+        $service_showForm = new Application_Service_ShowFormService(null);
+
+        $data = array();
+        $data['add_show_start_now'] = 'now';
+        $data['add_show_name'] = _("Untitled Show");
+        $data['add_show_description'] = '';
+        $data['add_show_url'] = '';
+        $data['add_show_genre'] = '';
+        $data['add_show_color'] = '';
+        $data['add_show_background_color'] = '';
+        $data['cb_airtime_auth'] = '';
+        $data['cb_custom_auth'] = '';
+        $data['custom_username'] = '';
+        $data['custom_password'] = '';
+        $data['add_show_linked'] = false;
+        $data['add_show_no_end'] = false;
+        $data['add_show_repeats'] = false;
+        $data['add_show_hosts'] = '';
+
+        $data["add_show_timezone"] = Application_Model_Preference::GetUserTimezone();
+
+        if ($data['add_show_start_now'] == "now") {
+
+            //have to use the timezone the user has entered in the form to check past/present
+            $showTimezone = new DateTimeZone($data["add_show_timezone"]);
+            $nowDateTime = new DateTime("now", $showTimezone);
+            //$showStartDateTime = new DateTime($start_time, $showTimezone);
+            //$showEndDateTime = new DateTime($end_time, $showTimezone);
+
+            $data['add_show_start_time'] = $nowDateTime->format("H:i");
+            $data['add_show_start_date'] = $nowDateTime->format("Y-m-d");
+        }
+
+        $data['add_show_duration'] = '1h';
+        $service_show = new Application_Service_ShowService(null, $data);
+        $service_show->addUpdateShow($data);
+
+
+        /*
+
+        $js = $this->_getParam('data');
+        $data = array();
+
+        //need to convert from serialized jQuery array.
+        foreach ($js as $j) {
+            $data[$j["name"]] = $j["value"];
+        }
+
+        $service_show = new Application_Service_ShowService(null, $data);
+
+        // TODO: move this to js
+        $data['add_show_hosts']     = $this->_getParam('hosts');
+        $data['add_show_day_check'] = $this->_getParam('days');
+
+        if ($data['add_show_day_check'] == "") {
+            $data['add_show_day_check'] = null;
+        }
+
+        $log_vars = array();
+        $log_vars["url"] = $_SERVER['HTTP_HOST'];
+        $log_vars["action"] = "schedule/add-show";
+        $log_vars["params"] = array();
+        $log_vars["params"]["form_data"] = $data;
+        Logging::info($log_vars);
+
+        $forms = $this->createShowFormAction();
+
+        $this->view->addNewShow = true;
+
+        if ($data['add_show_start_now'] == "now") {
+
+            //have to use the timezone the user has entered in the form to check past/present
+            $showTimezone = new DateTimeZone($data["add_show_timezone"]);
+            $nowDateTime = new DateTime("now", $showTimezone);
+            //$showStartDateTime = new DateTime($start_time, $showTimezone);
+            //$showEndDateTime = new DateTime($end_time, $showTimezone);
+
+            $data['add_show_start_time'] = $nowDateTime->format("H:i");
+            $data['add_show_start_date'] = $nowDateTime->format("Y-m-d");
+        }
+
+
+        if ($service_showForm->validateShowForms($forms, $data)) {
+            // Get the show ID from the show service to pass as a parameter to the RESTful ShowImageController
+            $this->view->showId = $service_show->addUpdateShow($data);
+
+            //send new show forms to the user
+            $this->createShowFormAction(true);
+            $this->view->newForm = $this->view->render('schedule/add-show-form.phtml');
+
+            Logging::debug("Show creation succeeded");
+        } else {
+            $this->view->form = $this->view->render('schedule/add-show-form.phtml');
+            Logging::debug("Show creation failed");
+        }*/
+    }
 }

@@ -40,7 +40,8 @@ class ScheduleController extends Zend_Controller_Action
                     ->addActionContext('get-current-show', 'json')
                     ->addActionContext('update-future-is-scheduled', 'json')
                     ->addActionContext('localize-start-end-time', 'json')
-                    ->initContext();
+                    ->addActionContext('create-quick-show', 'json')
+            ->initContext();
 
         $this->sched_sess = new Zend_Session_Namespace("schedule");
     }
@@ -769,6 +770,18 @@ class ScheduleController extends Zend_Controller_Action
             $this->_getParam('endDate'), $this->_getParam('endTime'), $newTimezone, $oldTimezone);
 
         $this->_helper->json->sendJson($localTime);
+    }
+
+    public function createQuickShowAction()
+    {
+        $this->view->layout()->disableLayout();
+        $this->_helper->viewRenderer->setNoRender(true);
+
+        $request = $this->getRequest();
+        if (!$request->isPost()) {
+            return;
+        }
+        Application_Service_SchedulerService::createQuickShow();
     }
     
 }
