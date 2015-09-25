@@ -55,7 +55,8 @@ function dayClick(date, allDay, jsEvent, view){
             //remove the +show button if it exists.
             if(addShow.length == 1){
                  var span = $(addShow).parent();
-                $(span).prev().remove();
+
+                $(span).next().remove();
                 $(span).remove();
             }
 
@@ -112,6 +113,7 @@ function dayClick(date, allDay, jsEvent, view){
                 $("#add_show_start_time").val(startTime_string)
                 $("#add_show_end_time").val(endTimeString)
             }
+            calculateShowColor();
             $("#schedule-show-when").show();
 
             openAddShowForm();
@@ -364,6 +366,9 @@ function getFullCalendarEvents(start, end, callback) {
                 getUsabilityHint();
             });
     }
+
+    $(".fc-button").addClass("btn").addClass("btn-small");
+    //$("span.fc-button > :button").addClass("btn btn-small");
 }
 
 function checkSCUploadStatus(){

@@ -1,6 +1,106 @@
 <?php
 
-class Cache
+abstract class AbstractCache
+{
+
+    abstract public function store($key, $value, $isUserValue, $userId = null);
+
+    abstract public function fetch($key, $isUserValue, $userId = null);
+
+    abstract public static function clear();
+}
+
+
+class DisabledCache extends AbstractCache {
+    public function store($key, $value, $isUserValue, $userId = null) {
+        return array("found"=>false);
+    }
+
+    public function fetch($key, $isUserValue, $userId = null) {
+        return false;
+    }
+
+    public static function clear() {
+        return;
+    }
+}
+
+class XCacheCache extends AbstractCache
+{
+
+    private static function getNamespace()
+    {
+        $CC_CONFIG = Config::getConfig();
+
+        $stationId = $CC_CONFIG['stationId'];
+        if (empty($stationId)) {
+            throw new Exception("Invalid station id in " . __FUNCTION__ . ": " . $stationId);
+        }
+
+        // We use this extra "namespace key" to implement cache clearing.
+        $namespaceKeyKey = "namespace_{$stationId}";
+        return $namespaceKeyKey;
+    }
+
+    private static function generateNamespaceKeyValue()
+    {
+        return openssl_random_pseudo_bytes(128);
+    }
+
+    private function createCacheKey($key, $isUserValue, $userId = null) {
+
+        $CC_CONFIG = Config::getConfig();
+        $apiKey = $CC_CONFIG["apiKey"][0];
+
+        $memcached = self::getMemcached();
+
+        $namespaceKeyKey = self::getNamespace();
+        //Create the namespace key value if it doesn't exist
+        if(!xcache_isset($namespaceKeyKey)) {
+            $namespaceKeyVal = self::generateNamespaceKeyValue();
+            xcache_set($namespaceKeyKey, $namespaceKeyVal);
+        } else {
+            $namespaceKeyVal = xcache_get($namespaceKeyKey);
+        }
+
+        if ($isUserValue) {
+            $cacheKey = "{$namespaceKeyVal}{$key}{$userId}{$apiKey}";
+        }
+        else {
+            $cacheKey = "{$namespaceKeyVal}{$key}{$apiKey}";
+        }
+
+        return $cacheKey;
+    }
+
+    public function store($key, $value, $isUserValue, $userId = null) {
+
+        $cacheKey = self::createCacheKey($key, $isUserValue, $userId);
+        return xcache_set($cacheKey, $value);
+    }
+
+    public function fetch($key, $isUserValue, $userId = null) {
+
+        $cacheKey = self::createCacheKey($key, $isUserValue, $userId);
+        $found = xcache_isset($cacheKey);
+        $value = xcache_get($cacheKey);
+        //need to return something to distinguish a cache miss from a stored "false" preference.
+        return array(
+            "found" => $found,
+            "value" => $value,
+        );
+    }
+
+    public static function clear()
+    {
+        $namespaceKeyKey = self::getNamespace();
+        $namespaceKeyVal = self::generateNamespaceKeyValue();
+        xcache_unset_by_prefix($namespaceKeyVal);
+    }
+}
+
+
+class MemcachedCache extends AbstractCache
 {
 
     private static function getNamespace()
@@ -23,7 +123,7 @@ class Cache
     }
 
     private function createCacheKey($key, $isUserValue, $userId = null) {
-        
+
         $CC_CONFIG = Config::getConfig();
         $apiKey = $CC_CONFIG["apiKey"][0];
 
@@ -72,9 +172,9 @@ class Cache
         $cache = self::getMemcached();
         return $cache->set($cacheKey, $value);
     }
-    
+
     public function fetch($key, $isUserValue, $userId = null) {
-            
+
         $cacheKey = self::createCacheKey($key, $isUserValue, $userId);
         $cache = self::getMemcached();
         $found = false;
@@ -90,8 +190,8 @@ class Cache
         );
     }
 
-	public static function clear()
-	{
+    public static function clear()
+    {
         //See "Deleting by Namespace":
         //https://code.google.com/p/memcached/wiki/NewProgrammingTricks
         $memcached = self::getMemcached();

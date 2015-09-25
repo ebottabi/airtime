@@ -31,6 +31,7 @@ require_once "Auth.php";
 require_once "interface/OAuth2.php";
 require_once "TaskManager.php";
 require_once "UsabilityHints.php";
+require_once __DIR__.'/models/formatters/LengthFormatter.php';
 require_once __DIR__.'/services/CeleryService.php';
 require_once __DIR__.'/services/SoundcloudService.php';
 require_once __DIR__.'/forms/helpers/ValidationTypes.php';
@@ -93,6 +94,15 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
             $userType = "";
         }
         $view->headScript()->appendScript("var userType = '$userType';");
+
+        // Dropzone also accept file extensions and doesn't correctly extract certain mimetypes (eg. FLAC - try it),
+        // so we append the file extensions to the list of mimetypes and that makes it work.
+        $mimeTypes = FileDataHelper::getAudioMimeTypeArray();
+        $fileExtensions = array_values($mimeTypes);
+        foreach($fileExtensions as &$extension) {
+            $extension = '.' . $extension;
+        }
+        $view->headScript()->appendScript("var acceptedMimeTypes = " . json_encode(array_merge(array_keys($mimeTypes), $fileExtensions)) . ";");
     }
 
     /**
@@ -103,10 +113,10 @@ class Bootstrap extends Zend_Application_Bootstrap_Bootstrap
         $csrf_namespace = new Zend_Session_Namespace('csrf_namespace');
         // Check if the token exists
         if (!$csrf_namespace->authtoken) {
-            // If we don't have a token, regenerate it and set a 2 hour timeout
+            // If we don't have a token, regenerate it and set a 1 week timeout
             // Should we log the user out here if the token is expired?
             $csrf_namespace->authtoken = sha1(uniqid(rand(), 1));
-            $csrf_namespace->setExpirationSeconds(2 * 60 * 60);
+            $csrf_namespace->setExpirationSeconds(168 * 60 * 60);
         }
 
         //Here we are closing the session for writing because otherwise no requests
