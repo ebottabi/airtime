@@ -1,5 +1,6 @@
 <?php
 
+require_once 'StreamSetting.php';
 require_once 'Cache.php';
 
 class Application_Model_Preference
@@ -26,18 +27,17 @@ class Application_Model_Preference
     private static function setValue($key, $value, $isUserValue = false)
     {
         $cache = new Cache();
-        
-        try {
-            
-            $con = Propel::getConnection(CcPrefPeer::DATABASE_NAME);
-            $con->beginTransaction();
+        $con = Propel::getConnection(CcPrefPeer::DATABASE_NAME);
+        $con->beginTransaction();
 
+        try {
+            /* Comment this out while we reevaluate it in favor of a unique constraint
+            static::_lock($con); */
             $userId = self::getUserId();
             
-            if ($isUserValue && is_null($userId))
+            if ($isUserValue && is_null($userId)) {
                 throw new Exception("User id can't be null for a user preference {$key}.");
-            
-            Application_Common_Database::prepareAndExecute("LOCK TABLE cc_pref");
+            }
 
             //Check if key already exists
             $sql = "SELECT COUNT(*) FROM cc_pref"
@@ -114,6 +114,28 @@ class Application_Model_Preference
         $cache->store($key, $value, $isUserValue, $userId);
     }
 
+    /**
+     * Given a PDO connection, lock the cc_pref table for the current transaction
+     *
+     * Creates a table level lock, which defaults to ACCESS EXCLUSIVE mode;
+     * see http://www.postgresql.org/docs/9.1/static/explicit-locking.html
+     *
+     * @param PDO $con
+     */
+    private static function _lock($con) {
+        // If we're not in a transaction, a lock is pointless
+        if (!$con->inTransaction()) {
+            return;
+        }
+        // Don't specify NOWAIT here; we should block on obtaining this lock
+        // in case we're handling simultaneous requests.
+        // Locks only last until the end of the transaction, so we shouldn't have to
+        // worry about this causing any noticeable difference in request processing speed
+        $sql = "LOCK TABLE cc_pref";
+        $st = $con->prepare($sql);
+        $st->execute();
+    }
+
     private static function getValue($key, $isUserValue = false, $bypassCacheRead = false)
     {
         $cache = new Cache();
@@ -145,9 +167,9 @@ class Application_Model_Preference
                 $sql .= " AND subjid = :id";
                 $paramMap[':id'] = $userId;
             }
-            
+
             $result = Application_Common_Database::prepareAndExecute($sql, $paramMap, Application_Common_Database::COLUMN);
-            
+
             //return an empty string if the result doesn't exist.
             if ($result == 0) {
                 $res = "";
@@ -216,7 +238,7 @@ class Application_Model_Preference
     public static function SetShowsPopulatedUntil($dateTime)
     {
         $dateTime->setTimezone(new DateTimeZone("UTC"));
-        self::setValue("shows_populated_until", $dateTime->format("Y-m-d H:i:s"));
+        self::setValue("shows_populated_until", $dateTime->format(DEFAULT_TIMESTAMP_FORMAT));
     }
 
     /**
@@ -335,77 +357,6 @@ class Application_Model_Preference
         self::setValue("station_name", $station_name);
     }
 
-    public static function SetAutoUploadRecordedShowToSoundcloud($upload)
-    {
-        self::setValue("soundcloud_auto_upload_recorded_show", $upload);
-    }
-
-    public static function GetAutoUploadRecordedShowToSoundcloud()
-    {
-        return self::getValue("soundcloud_auto_upload_recorded_show");
-    }
-
-    public static function SetSoundCloudUser($user)
-    {
-        self::setValue("soundcloud_user", $user);
-    }
-
-    public static function GetSoundCloudUser()
-    {
-        return self::getValue("soundcloud_user");
-    }
-
-    public static function SetSoundCloudPassword($password)
-    {
-        if (strlen($password) > 0)
-            self::setValue("soundcloud_password", $password);
-    }
-
-    public static function GetSoundCloudPassword()
-    {
-        return self::getValue("soundcloud_password");
-    }
-
-    public static function SetSoundCloudTags($tags)
-    {
-        self::setValue("soundcloud_tags", $tags);
-    }
-
-    public static function GetSoundCloudTags()
-    {
-        return self::getValue("soundcloud_tags");
-    }
-
-    public static function SetSoundCloudGenre($genre)
-    {
-        self::setValue("soundcloud_genre", $genre);
-    }
-
-    public static function GetSoundCloudGenre()
-    {
-        return self::getValue("soundcloud_genre");
-    }
-
-    public static function SetSoundCloudTrackType($track_type)
-    {
-        self::setValue("soundcloud_tracktype", $track_type);
-    }
-
-    public static function GetSoundCloudTrackType()
-    {
-        return self::getValue("soundcloud_tracktype");
-    }
-
-    public static function SetSoundCloudLicense($license)
-    {
-        self::setValue("soundcloud_license", $license);
-    }
-
-    public static function GetSoundCloudLicense()
-    {
-        return self::getValue("soundcloud_license");
-    }
-
     public static function SetAllow3rdPartyApi($bool)
     {
         self::setValue("third_party_api", $bool);
@@ -414,7 +365,7 @@ class Application_Model_Preference
     public static function GetAllow3rdPartyApi()
     {
         $val = self::getValue("third_party_api");
-        return (strlen($val) == 0 ) ? "0" : $val;
+        return (strlen($val) == 0 ) ? "1" : $val;
     }
 
     public static function SetPhone($phone)
@@ -504,7 +455,12 @@ class Application_Model_Preference
 
     public static function GetStationDescription()
     {
-        return self::getValue("description");
+        $description = self::getValue("description");
+        if (!empty($description)) {
+            return $description;
+        } else {
+            return sprintf(_("Powered by %s"), SAAS_PRODUCT_BRANDING_NAME);
+        }
     }
 
     // Sets station default timezone (from preferences)
@@ -608,7 +564,14 @@ class Application_Model_Preference
 
     public static function GetStationLogo()
     {
-        return self::getValue("logoImage");
+        $logoImage = self::getValue("logoImage");
+        if (!empty($logoImage)) {
+            return $logoImage;
+        } else {
+            // We return the Airtime logo if no logo is set in the database.
+            // airtime_logo.png is stored under the public directory
+            return DEFAULT_LOGO_PLACEHOLDER;
+        }
     }
     
     public static function SetUniqueId($id)
@@ -666,12 +629,6 @@ class Application_Model_Preference
 
         $outputArray['LIVE_DURATION'] = Application_Model_LiveLog::GetLiveShowDuration($p_testing);
         $outputArray['SCHEDULED_DURATION'] = Application_Model_LiveLog::GetScheduledDuration($p_testing);
-        $outputArray['SOUNDCLOUD_ENABLED'] = self::GetUploadToSoundcloudOption();
-        if ($outputArray['SOUNDCLOUD_ENABLED']) {
-            $outputArray['NUM_SOUNDCLOUD_TRACKS_UPLOADED'] = Application_Model_StoredFile::getSoundCloudUploads();
-        } else {
-            $outputArray['NUM_SOUNDCLOUD_TRACKS_UPLOADED'] = NULL;
-        }
 
         $outputArray['STATION_NAME'] = self::GetStationName();
         $outputArray['PHONE'] = self::GetPhone();
@@ -695,7 +652,7 @@ class Application_Model_Preference
         $outputArray['NUM_OF_SONGS'] = Application_Model_StoredFile::getFileCount();
         $outputArray['NUM_OF_PLAYLISTS'] = Application_Model_Playlist::getPlaylistCount();
         $outputArray['NUM_OF_SCHEDULED_PLAYLISTS'] = Application_Model_Schedule::getSchduledPlaylistCount();
-        $outputArray['NUM_OF_PAST_SHOWS'] = Application_Model_ShowInstance::GetShowInstanceCount(gmdate("Y-m-d H:i:s"));
+        $outputArray['NUM_OF_PAST_SHOWS'] = Application_Model_ShowInstance::GetShowInstanceCount(gmdate(DEFAULT_TIMESTAMP_FORMAT));
         $outputArray['UNIQUE_ID'] = self::GetUniqueId();
         $outputArray['SAAS'] = self::GetPlanLevel();
         $outputArray['TRIAL_END_DATE'] = self::GetTrialEndingDate();
@@ -716,12 +673,6 @@ class Application_Model_Preference
                     foreach ($s_info as $k => $v) {
                         $outputString .= "\t".strtoupper($k)." : ".$v."\n";
                     }
-                }
-            } elseif ($key == "SOUNDCLOUD_ENABLED") {
-                if ($out) {
-                    $outputString .= $key." : TRUE\n";
-                } elseif (!$out) {
-                    $outputString .= $key." : FALSE\n";
                 }
             } elseif ($key == "SAAS") {
                 $outputString .= $key.' : '.$out."\n";
@@ -809,6 +760,19 @@ class Application_Model_Preference
     public static function SetNumOfStreams($num)
     {
         self::setValue("num_of_streams", intval($num));
+
+        //Enable or disable each stream according to whatever was just changed.
+        for ($streamIdx = 1; $streamIdx <= MAX_NUM_STREAMS; $streamIdx++)
+        {
+            $prefix = 's' . $streamIdx . '_';
+            $enable = 'false';
+            if ($streamIdx <= intval($num)) {
+                $enable = 'true';
+            }
+
+            //Enable or disable the stream in the Stream Settings DB table.
+            Application_Model_StreamSetting::setIndividualStreamSetting(array($prefix.'enable' => $enable));
+        }
     }
 
     public static function GetNumOfStreams()
@@ -880,10 +844,30 @@ class Application_Model_Preference
 
         return self::getValue("enable_stream_conf");
     }
-    
-    public static function SetAirtimeVersion($version)
+
+    public static function GetSchemaVersion()
     {
-        self::setValue("system_version", $version);
+        CcPrefPeer::clearInstancePool(); //Ensure we don't get a cached Propel object (cached DB results)
+        //because we're updating this version number within this HTTP request as well.
+
+        //New versions use schema_version
+        $pref = CcPrefQuery::create()
+            ->filterByKeystr('schema_version')
+            ->findOne();
+
+        if (empty($pref)) {
+            //Pre-2.5.2 releases all used this ambiguous "system_version" key to represent both the code and schema versions...
+            $pref = CcPrefQuery::create()
+                ->filterByKeystr('system_version')
+                ->findOne();
+        }
+        $schemaVersion = $pref->getValStr();
+        return $schemaVersion;
+    }
+
+    public static function SetSchemaVersion($version)
+    {
+        self::setValue("schema_version", $version);
     }
 
     public static function GetAirtimeVersion()
@@ -934,26 +918,6 @@ class Application_Model_Preference
         if (preg_match($pattern, $link)) {
             self::setValue("latest_link", $link);
         }
-    }
-
-    public static function SetUploadToSoundcloudOption($upload)
-    {
-        self::setValue("soundcloud_upload_option", $upload);
-    }
-
-    public static function GetUploadToSoundcloudOption()
-    {
-        return self::getValue("soundcloud_upload_option");
-    }
-
-    public static function SetSoundCloudDownloadbleOption($upload)
-    {
-        self::setValue("soundcloud_downloadable", $upload);
-    }
-
-    public static function GetSoundCloudDownloadbleOption()
-    {
-        return self::getValue("soundcloud_downloadable");
     }
 
     public static function SetWeekStartDay($day)
@@ -1095,7 +1059,7 @@ class Application_Model_Preference
     public static function GetDiskQuota()
     {
         $val = self::getValue("disk_quota");
-        return (strlen($val) == 0) ? 0 : $val;
+        return empty($val) ? 2147483648 : $val;  # If there is no value for disk quota, return 2GB
     }
 
     public static function SetLiveStreamMasterUsername($value)
@@ -1136,6 +1100,13 @@ class Application_Model_Preference
 
     public static function GetSourceSwitchStatus($sourcename)
     {
+        // Scheduled play switch should always be "on".
+        // Even though we've hidden this element in the dashboard we should
+        // always make sure it's on or else a station's stream could go offline.
+        if ($sourcename == "scheduled_play") {
+            return "on";
+        }
+
         $value = self::getValue($sourcename."_switch");
         return ($value == null || $value == "off") ? 'off' : 'on';
     }
@@ -1200,87 +1171,6 @@ class Application_Model_Preference
     public static function GetAutoSwitch()
     {
         return self::getValue("auto_switch");
-    }
-
-    public static function SetEnableSystemEmail($upload)
-    {
-        self::setValue("enable_system_email", $upload);
-    }
-
-    public static function GetEnableSystemEmail()
-    {
-        $v =  self::getValue("enable_system_email");
-        return ($v === "") ?  0 : $v;
-    }
-
-    public static function SetSystemEmail($value)
-    {
-        self::setValue("system_email", $value, false);
-    }
-
-    public static function GetSystemEmail()
-    {
-        return self::getValue("system_email");
-    }
-
-    public static function SetMailServerConfigured($value)
-    {
-        self::setValue("mail_server_configured", $value, false);
-    }
-
-    public static function GetMailServerConfigured()
-    {
-        return self::getValue("mail_server_configured");
-    }
-
-    public static function SetMailServer($value)
-    {
-        self::setValue("mail_server", $value, false);
-    }
-
-    public static function GetMailServer()
-    {
-        return self::getValue("mail_server");
-    }
-
-    public static function SetMailServerEmailAddress($value)
-    {
-        self::setValue("mail_server_email_address", $value, false);
-    }
-
-    public static function GetMailServerEmailAddress()
-    {
-        return self::getValue("mail_server_email_address");
-    }
-
-    public static function SetMailServerPassword($value)
-    {
-        self::setValue("mail_server_password", $value, false);
-    }
-
-    public static function GetMailServerPassword()
-    {
-        return self::getValue("mail_server_password");
-    }
-
-    public static function SetMailServerPort($value)
-    {
-        self::setValue("mail_server_port", $value, false);
-    }
-
-    public static function GetMailServerPort()
-    {
-        return self::getValue("mail_server_port");
-    }
-
-    public static function SetMailServerRequiresAuth($value)
-    {
-        self::setValue("mail_server_requires_auth", $value, false);
-    }
-
-    public static function GetMailServerRequiresAuth()
-    {
-        return self::getValue("mail_server_requires_auth");
     }
     /* User specific preferences end */
 
@@ -1446,5 +1336,152 @@ class Application_Model_Preference
         }
 
         self::setDiskUsage($currentDiskUsage + $filesize);
+    }
+
+
+    public static function setProvisioningStatus($status)
+    {
+        //See constants.php for the list of valid values. eg. PROVISIONING_STATUS_ACTIVE
+        self::setValue("provisioning_status", $status);
+    }
+
+    public static function getProvisioningStatus()
+    {
+        return self::getValue("provisioning_status");
+    }
+
+    public static function setTuneinEnabled($value)
+    {
+        self::setValue("tunein_enabled", $value);
+    }
+
+    public static function getTuneinEnabled()
+    {
+        return self::getValue("tunein_enabled");
+    }
+
+    public static function setTuneinPartnerKey($value)
+    {
+        self::setValue("tunein_partner_key", $value);
+    }
+
+    public static function getTuneinPartnerKey()
+    {
+        return self::getValue("tunein_partner_key");
+    }
+
+    public static function setTuneinPartnerId($value)
+    {
+        self::setValue("tunein_partner_id", $value);
+    }
+
+    public static function getTuneinPartnerId()
+    {
+        return self::getValue("tunein_partner_id");
+    }
+
+    public static function setTuneinStationId($value)
+    {
+        self::setValue("tunein_station_id", $value);
+    }
+
+    public static function getTuneinStationId()
+    {
+        return self::getValue("tunein_station_id");
+    }
+
+    public static function geLastTuneinMetadataUpdate()
+    {
+        return self::getValue("last_tunein_metadata_update");
+    }
+
+    public static function setLastTuneinMetadataUpdate($value)
+    {
+        self::setValue("last_tunein_metadata_update", $value);
+    }
+
+    /* Third Party */
+
+    // SoundCloud
+
+    public static function getDefaultSoundCloudLicenseType() {
+        $val = self::getValue("soundcloud_license_type");
+        // If we don't have a value set, return all-rights-reserved by default
+        return empty($val) ? DEFAULT_SOUNDCLOUD_LICENSE_TYPE : $val;
+    }
+
+    public static function setDefaultSoundCloudLicenseType($value) {
+        self::setValue("soundcloud_license_type", $value);
+    }
+
+    public static function getDefaultSoundCloudSharingType() {
+        $val = self::getValue("soundcloud_sharing_type");
+        // If we don't have a value set, return public by default
+        return empty($val) ? DEFAULT_SOUNDCLOUD_SHARING_TYPE : $val;
+    }
+
+    public static function setDefaultSoundCloudSharingType($value) {
+        self::setValue("soundcloud_sharing_type", $value);
+    }
+
+    public static function getSoundCloudRequestToken() {
+        return self::getValue("soundcloud_request_token");
+    }
+
+    public static function setSoundCloudRequestToken($value) {
+        self::setValue("soundcloud_request_token", $value);
+    }
+
+    // TaskManager Lock Timestamp
+
+    public static function getTaskManagerLock() {
+        return self::getValue("task_manager_lock");
+    }
+
+    public static function setTaskManagerLock($value) {
+        self::setValue("task_manager_lock", $value);
+    }
+
+    // SAAS-876 - Toggle indicating whether user is using custom stream settings
+
+    public static function getUsingCustomStreamSettings() {
+        $val = self::getValue("using_custom_stream_settings");
+        return empty($val) ? false : $val;
+    }
+
+    public static function setUsingCustomStreamSettings($value) {
+        self::setValue("using_custom_stream_settings", $value);
+    }
+
+    // SAAS-876 - Store the default Icecast password to restore when switching
+    //            back to Airtime Pro streaming settings
+
+    public static function getDefaultIcecastPassword() {
+        $val = self::getValue("default_icecast_password");
+        return empty($val) ? DEFAULT_ICECAST_PASS : $val;
+    }
+
+    public static function setDefaultIcecastPassword($value) {
+        self::setValue("default_icecast_password", $value);
+    }
+
+    public static function getRadioPageDisplayLoginButton()
+    {
+        return self::getValue("radio_page_display_login_button");
+    }
+
+    public static function setRadioPageDisplayLoginButton($value)
+    {
+        self::setValue("radio_page_display_login_button", $value);
+    }
+
+    public static function getLangTimezoneSetupComplete()
+    {
+        return self::getValue("lang_tz_setup_complete");
+    }
+
+    public static function setLangTimezoneSetupComplete($value)
+    {
+        self::setValue("lang_tz_setup_complete", $value);
     }
 }

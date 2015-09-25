@@ -37,7 +37,11 @@ $ccAcl->add(new Zend_Acl_Resource('library'))
       ->add(new Zend_Acl_Resource('rest:show-image'))
       ->add(new Zend_Acl_Resource('billing'))
       ->add(new Zend_Acl_Resource('thank-you'))
-      ->add(new Zend_Acl_Resource('provisioning'));
+      ->add(new Zend_Acl_Resource('provisioning'))
+      ->add(new Zend_Acl_Resource('player'))
+      ->add(new Zend_Acl_Resource('soundcloud'))
+      ->add(new Zend_Acl_Resource('embeddablewidgets'))
+      ->add(new Zend_Acl_Resource('setup'));
 
 /** Creating permissions */
 $ccAcl->allow('G', 'index')
@@ -56,8 +60,10 @@ $ccAcl->allow('G', 'index')
       ->allow('G', 'provisioning')
       ->allow('G', 'downgrade')
       ->allow('G', 'rest:show-image', 'get')
-      ->allow('H', 'rest:show-image')
       ->allow('G', 'rest:media', 'get')
+      ->allow('G', 'setup')
+      ->allow('H', 'soundcloud')
+      ->allow('H', 'rest:show-image')
       ->allow('H', 'rest:media')
       ->allow('H', 'preference', 'is-import-in-progress')
       ->allow('H', 'usersettings')
@@ -70,6 +76,8 @@ $ccAcl->allow('G', 'index')
       ->allow('A', 'user')
       ->allow('A', 'systemstatus')
       ->allow('A', 'preference')
+      ->allow('A', 'player')
+      ->allow('A', 'embeddablewidgets')
       ->allow('S', 'thank-you')
       ->allow('S', 'billing');
       

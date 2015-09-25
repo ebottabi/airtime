@@ -1,4 +1,5 @@
 <?php
+require_once('TuneIn.php');
 
 $filepath = realpath (dirname(__FILE__));
 require_once($filepath."/../modules/rest/controllers/MediaController.php");
@@ -50,12 +51,10 @@ class ScheduleController extends Zend_Controller_Action
 
         $baseUrl = Application_Common_OsPath::getBaseDir();
 
-        $foo = new ScheduleController($this->getRequest(), $this->getResponse());
-        $foo->eventFeedPreloadAction();
-        //$foo->eventFeedAction();
-        $events = json_encode($foo->view->events);
-        //$timescale =
-            //$this->getRequest()->getParam("view", "week");
+        //Embed the schedule in our page response so we don't have to make an AJAX request to get this data after the page load.
+        $scheduleController = new ScheduleController($this->getRequest(), $this->getResponse());
+        $scheduleController->eventFeedPreloadAction();
+        $events = json_encode($scheduleController->view->events);
 
         $this->view->headScript()->appendScript(
             "var calendarPref = {};\n".
@@ -98,6 +97,9 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->headScript()->appendFile($baseUrl.'js/datatables/plugin/dataTables.ColReorder.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
         $this->view->headScript()->appendFile($baseUrl.'js/datatables/plugin/dataTables.FixedColumns.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
         $this->view->headScript()->appendFile($baseUrl.'js/datatables/plugin/dataTables.columnFilter.js?'.$CC_CONFIG['airtime_version'], 'text/javascript');
+
+        $this->view->headScript()->appendFile($baseUrl.'js/libs/moment.min.js?'.$CC_CONFIG['airtime_version'], 'text/javascript');
+        $this->view->headScript()->appendFile($baseUrl.'js/libs/moment-timezone-with-data-2010-2020.min.js?'.$CC_CONFIG['airtime_version'], 'text/javascript');
 
         $this->view->headScript()->appendFile($baseUrl.'js/airtime/buttons/buttons.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
         $this->view->headScript()->appendFile($baseUrl.'js/airtime/library/events/library_showbuilder.js?'.$CC_CONFIG['airtime_version'],'text/javascript');
@@ -151,7 +153,7 @@ class ScheduleController extends Zend_Controller_Action
         } else if ($calendar_interval == "agendaWeek") {
             list($start, $end) = Application_Model_Show::getStartEndCurrentWeekView();
         } else if ($calendar_interval == "month") {
-            list($start, $end) = Application_Model_Show::getStartEndCurrentMonthView();
+            list($start, $end) = Application_Model_Show::getStartEndCurrentMonthPlusView();
         } else {
             Logging::error("Invalid Calendar Interval '$calendar_interval'");
         }
@@ -254,25 +256,6 @@ class ScheduleController extends Zend_Controller_Action
         $this->view->show_id = $showId;
     }
 
-    public function uploadToSoundCloudAction()
-    {
-        $show_instance = $this->_getParam('id');
-        
-        try {
-            $show_inst = new Application_Model_ShowInstance($show_instance);
-        } catch (Exception $e) {
-            $this->view->show_error = true;
-
-            return false;
-        }
-
-        $file = $show_inst->getRecordedFile();
-        $id = $file->getId();
-        Application_Model_Soundcloud::uploadSoundcloud($id);
-        // we should die with ui info
-        $this->_helper->json->sendJson(null);
-    }
-
     public function makeContextMenuAction()
     {
         $instanceId = $this->_getParam('instanceId');
@@ -307,14 +290,15 @@ class ScheduleController extends Zend_Controller_Action
     public static function printCurrentPlaylistForEmbedding()
     {
         $front = Zend_Controller_Front::getInstance();
-        $foo = new ScheduleController($front->getRequest(), $front->getResponse());
-        $foo->getCurrentPlaylistAction();
-        echo(json_encode($foo->view));
+        $scheduleController = new ScheduleController($front->getRequest(), $front->getResponse());
+        $scheduleController->getCurrentPlaylistAction();
+        echo(json_encode($scheduleController->view));
     }
 
     public function getCurrentPlaylistAction()
     {
         $range = Application_Model_Schedule::GetPlayOrderRangeOld();
+
         $show = Application_Model_Show::getCurrentShow();
 
         /* Convert all UTC times to localtime before sending back to user. */
@@ -603,7 +587,20 @@ class ScheduleController extends Zend_Controller_Action
         $forms = $this->createShowFormAction();
         
         $this->view->addNewShow = true;
-        
+
+        if ($data['add_show_start_now'] == "now") {
+
+            //have to use the timezone the user has entered in the form to check past/present
+            $showTimezone = new DateTimeZone($data["add_show_timezone"]);
+            $nowDateTime = new DateTime("now", $showTimezone);
+            //$showStartDateTime = new DateTime($start_time, $showTimezone);
+            //$showEndDateTime = new DateTime($end_time, $showTimezone);
+
+            $data['add_show_start_time'] = $nowDateTime->format("H:i");
+            $data['add_show_start_date'] = $nowDateTime->format("Y-m-d");
+        }
+
+
         if ($service_showForm->validateShowForms($forms, $data)) {
         	// Get the show ID from the show service to pass as a parameter to the RESTful ShowImageController
         	$this->view->showId = $service_show->addUpdateShow($data);

@@ -1,5 +1,5 @@
 -- Schema version
-INSERT INTO cc_pref("keystr", "valstr") VALUES('system_version', '2.5.9');
+INSERT INTO cc_pref("keystr", "valstr") VALUES('schema_version', '2.5.12');
 
 INSERT INTO cc_subjs ("login", "type", "pass") VALUES ('admin', 'A', md5('admin'));
 -- added in 2.3
@@ -358,3 +358,29 @@ INSERT INTO cc_pref (subjid, keystr, valstr) VALUES (1, 'user_timezone', 'UTC');
 INSERT INTO cc_pref (keystr, valstr) VALUES ('import_timestamp', '0');
 
 --end added in 2.5.2
+
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_enable', 'false', 'boolean');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_output', 'icecast', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_name', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_type', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_bitrate', '', 'integer');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_host', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_port', '', 'integer');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_user', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_pass', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_admin_user', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_admin_pass', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_mount', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_url', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_description', '', 'string');
+INSERT INTO cc_stream_setting ("keyname", "value", "type") VALUES ('s4_genre', '', 'string');
+INSERT INTO cc_stream_setting (keyname, value, type) VALUES ('s4_channels', 'stereo', 'string');
+
+-- added in 2.5.14 - this can't be set up in Propel's XML schema, so we need to do it here -- Duncan
+
+ALTER TABLE cc_pref ALTER COLUMN subjid SET NULL;
+ALTER TABLE cc_pref ALTER COLUMN subjid SET DEFAULT NULL;
+CREATE UNIQUE INDEX cc_pref_key_idx ON cc_pref (keystr) WHERE subjid IS NULL;
+ANALYZE cc_pref; -- this validates the new partial index
+
+--end added in 2.5.14

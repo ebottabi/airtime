@@ -96,6 +96,8 @@ class Application_Service_ShowFormService
         $forms["repeats"]->disable();
         $forms["who"]->disable();
         $forms["style"]->disable();
+        // Hide the show logo fields when users are editing a single instance
+        $forms["style"]->hideShowLogo();
         $forms["live"]->disable();
         $forms["record"]->disable();
         $forms["rebroadcast"]->disable();
@@ -156,12 +158,19 @@ class Application_Service_ShowFormService
             if (!$ccShowDay->isRepeating()) {
                 $form->disableStartDateAndTime();
             } else {
-                list($showStart, $showEnd) = $this->getNextFutureRepeatShowTime();
+                $showStartAndEnd = $this->getNextFutureRepeatShowTime();
+                if (!is_null($showStartAndEnd)) {
+                    $showStart = $showStartAndEnd["starts"];
+                    $showEnd = $showStartAndEnd["ends"];
+                }
                 if ($this->hasShowStarted($showStart)) {
                     $form->disableStartDateAndTime();
                 }
             }
         }
+
+        //Disable starting a show 'now' when editing an existing show.
+        $form->getElement('add_show_start_now')->setAttrib('disable', array('now'));
 
         $form->populate(
             array(
@@ -174,6 +183,29 @@ class Application_Service_ShowFormService
                 'add_show_repeats' => $ccShowDay->isRepeating() ? 1 : 0));
 
         return $showStart;
+    }
+
+    public function getNextFutureRepeatShowTime()
+    {
+        $ccShowInstance = CcShowInstancesQuery::create()
+            ->filterByDbShowId($this->ccShow->getDbId())
+            ->filterByDbModifiedInstance(false)
+            ->filterByDbStarts(gmdate("Y-m-d H:i:s"), Criteria::GREATER_THAN)
+            ->orderByDbStarts()
+            ->findOne();
+
+        if (!$ccShowInstance) {
+            return null;
+        }
+
+        $starts = new DateTime($ccShowInstance->getDbStarts(), new DateTimeZone("UTC"));
+        $ends = new DateTime($ccShowInstance->getDbEnds(), new DateTimeZone("UTC"));
+        $showTimezone = $this->ccShow->getFirstCcShowDay()->getDbTimezone();
+
+        $starts->setTimezone(new DateTimeZone($showTimezone));
+        $ends->setTimezone(new DateTimeZone($showTimezone));
+
+        return array("starts" => $starts, "ends" => $ends);
     }
 
     private function populateInstanceFormWhen($form)
@@ -196,14 +228,18 @@ class Application_Service_ShowFormService
             $form->disableStartDateAndTime();
         }
 
+        //Disable starting a show 'now' when editing an existing show.
+        $form->getElement('add_show_start_now')->setAttrib('disable', array('now'));
+
         $form->populate(
             array(
+                'add_show_start_now' => 'future',
                 'add_show_start_date' => $showStart->format("Y-m-d"),
                 'add_show_start_time' => $showStart->format("H:i"),
                 'add_show_end_date_no_repeat' => $showEnd->format("Y-m-d"),
                 'add_show_end_time' => $showEnd->format("H:i"),
                 'add_show_duration' => $this->calculateDuration(
-                    $showStart->format("Y-m-d H:i:s"), $showEnd->format("Y-m-d H:i:s"), $timezone),
+                    $showStart->format(DEFAULT_TIMESTAMP_FORMAT), $showEnd->format(DEFAULT_TIMESTAMP_FORMAT), $timezone),
                 'add_show_timezone' => $timezone,
                 'add_show_repeats' => 0));
 
@@ -410,9 +446,8 @@ class Application_Service_ShowFormService
 
         //if the show is repeating, set the start date to the next
         //repeating instance in the future
-        if ($this->ccShow->isRepeating()) {
-             list($originalShowStartDateTime,) = $this->getNextFutureRepeatShowTime();
-        } else {
+        $originalShowStartDateTime = $this->getCurrentOrNextInstanceStartTime();
+        if (!$originalShowStartDateTime) {
             $originalShowStartDateTime = $dt;
         }
 
@@ -421,25 +456,30 @@ class Application_Service_ShowFormService
 
     /**
      * 
-     * Returns 2 DateTime objects, in the user's local time,
-     * of the next future repeat show instance start and end time
+     * Returns a DateTime object, in the user's local time,
+     * of the current or next show instance start time
+     *
+     * Returns null if there is no next future repeating show instance
      */
-    public function getNextFutureRepeatShowTime()
+    public function getCurrentOrNextInstanceStartTime()
     {
         $ccShowInstance = CcShowInstancesQuery::create()
             ->filterByDbShowId($this->ccShow->getDbId())
             ->filterByDbModifiedInstance(false)
-            ->filterByDbStarts(gmdate("Y-m-d H:i:s"), Criteria::GREATER_THAN)
+            ->filterByDbStarts(gmdate("Y-m-d H:i:s"), Criteria::GREATER_EQUAL)
+            ->orderByDbStarts()
             ->findOne();
+
+        if (!$ccShowInstance) {
+            return null;
+        }
         
         $starts = new DateTime($ccShowInstance->getDbStarts(), new DateTimeZone("UTC"));
-        $ends = new DateTime($ccShowInstance->getDbEnds(), new DateTimeZone("UTC"));
         $showTimezone = $this->ccShow->getFirstCcShowDay()->getDbTimezone();
 
         $starts->setTimezone(new DateTimeZone($showTimezone));
-        $ends->setTimezone(new DateTimeZone($showTimezone));
 
-        return array($starts, $ends);
+        return $starts;
     }
 
 

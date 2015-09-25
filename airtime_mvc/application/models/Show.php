@@ -305,7 +305,7 @@ SQL;
             array(
                 ':deltaDay1'          => "$deltaDay days",
                 ':interval1'          => "$hours:$mins",
-                ':current_timestamp1' =>  $nowDateTime->format("Y-m-d H:i:s"),
+                ':current_timestamp1' =>  $nowDateTime->format(DEFAULT_TIMESTAMP_FORMAT),
                 ':deltaDay2'          => "$deltaDay days",
                 ':interval2'          => "$hours:$mins"
             ), "execute");
@@ -336,7 +336,7 @@ SQL;
             CcShowInstancesPeer::clearInstancePool();
 
             $instances = CcShowInstancesQuery::create()
-                ->filterByDbEnds($nowDateTime->format("Y-m-d H:i:s"), Criteria::GREATER_THAN)
+                ->filterByDbEnds($nowDateTime->format(DEFAULT_TIMESTAMP_FORMAT), Criteria::GREATER_THAN)
                 ->filterByDbId($instanceIds, Criteria::IN)
                 ->find($con);
 
@@ -525,7 +525,7 @@ WHERE starts > :timestamp::TIMESTAMP
   AND show_id = :showId
 SQL;
         Application_Common_Database::prepareAndExecute( $sql,
-            array( ':timestamp' => gmdate("Y-m-d H:i:s"),
+            array( ':timestamp' => gmdate(DEFAULT_TIMESTAMP_FORMAT),
                    ':showId'    => $this->getId()), 'execute');
     }
 
@@ -544,7 +544,7 @@ WHERE starts > :timestamp::TIMESTAMP
 SQL;
         Application_Common_Database::prepareAndExecute( $sql,
             array( ':showId' => $this->getId(),
-                   ':timestamp' => gmdate("Y-m-d H:i:s")), 'execute');
+                   ':timestamp' => gmdate(DEFAULT_TIMESTAMP_FORMAT)), 'execute');
     }
 
     /**
@@ -658,7 +658,7 @@ SQL;
      */
     public function isStartDateTimeInPast()
     {
-        return (gmdate("Y-m-d H:i:s") > ($this->getStartDate()." ".$this->getStartTime()));
+        return (gmdate(DEFAULT_TIMESTAMP_FORMAT) > ($this->getStartDate()." ".$this->getStartTime()));
     }
 
     /**
@@ -679,7 +679,7 @@ WHERE show_id = :showId
 SQL;
         $rows = Application_Common_Database::prepareAndExecute($sql,
             array( ':showId'    => $this->getId(),
-                   ':timestamp' => gmdate("Y-m-d H:i:s")), "all");
+                   ':timestamp' => gmdate(DEFAULT_TIMESTAMP_FORMAT)), "all");
 
         $res = array();
         foreach ($rows as $r) {
@@ -699,7 +699,7 @@ SQL;
     {
         //need to update cc_show_instances, cc_show_days
         $con = Propel::getConnection();
-        $timestamp = gmdate("Y-m-d H:i:s");
+        $timestamp = gmdate(DEFAULT_TIMESTAMP_FORMAT);
 
         $stmt =  $con->prepare("UPDATE cc_show_days "
                  ."SET duration = :add_show_duration "
@@ -811,7 +811,7 @@ SQL;
      *      row in the cc_show_instances table. */
     public function getInstanceOnDate($p_dateTime)
     {
-        $timestamp = $p_dateTime->format("Y-m-d H:i:s");
+        $timestamp = $p_dateTime->format(DEFAULT_TIMESTAMP_FORMAT);
         $sql = <<<SQL
 SELECT id
 FROM cc_show_instances
@@ -898,8 +898,8 @@ LEFT JOIN cc_files          AS f    ON f.id            = si1.file_id
 WHERE si1.modified_instance = FALSE
 SQL;
         //only want shows that are starting at the time or later.
-        $start_string = $start_timestamp->format("Y-m-d H:i:s");
-        $end_string = $end_timestamp->format("Y-m-d H:i:s");
+        $start_string = $start_timestamp->format(DEFAULT_TIMESTAMP_FORMAT);
+        $end_string = $end_timestamp->format(DEFAULT_TIMESTAMP_FORMAT);
 
         $params = array();
 
@@ -974,10 +974,7 @@ SQL;
         foreach ($shows as &$show) {
             $options = array();
 
-            //only bother calculating percent for week or day view.
-            if (intval($days) <= 7) {
-                $options["percent"] = Application_Model_Show::getPercentScheduled($show["starts"], $show["ends"], $show["time_filled"]);
-            }
+            $options["percent"] = Application_Model_Show::getPercentScheduled($show["starts"], $show["ends"], $show["time_filled"]);
 
             if (isset($show["parent_starts"])) {
                 $parentStartsDT = new DateTime($show["parent_starts"], $utcTimezone);
@@ -1015,8 +1012,8 @@ SQL;
 
             $event["id"]            = intval($show["instance_id"]);
             $event["title"]         = $show["name"];
-            $event["start"]         = $startsDT->format("Y-m-d H:i:s");
-            $event["end"]           = $endsDT->format("Y-m-d H:i:s");
+            $event["start"]         = $startsDT->format(DEFAULT_TIMESTAMP_FORMAT);
+            $event["end"]           = $endsDT->format(DEFAULT_TIMESTAMP_FORMAT);
             $event["allDay"]        = false;
             $event["showId"]        = intval($show["show_id"]);
             $event["linked"]        = intval($show["linked"]);
@@ -1083,7 +1080,7 @@ SQL;
     {
         $con = Propel::getConnection();
         if ($timeNow == null) {
-            $timeNow = gmdate("Y-m-d H:i:s");
+            $timeNow = gmdate(DEFAULT_TIMESTAMP_FORMAT);
         }
         //TODO, returning starts + ends twice (once with an alias). Unify this after the 2.0 release. --Martin
         $sql = <<<SQL
@@ -1160,19 +1157,19 @@ WHERE si.show_id = s.id
   AND si.starts >= :timeNow::timestamp - INTERVAL '2 days'
   AND si.starts < :timeEnd::timestamp
   AND modified_instance != TRUE
-ORDER BY 
-  CASE 
+ORDER BY
+  CASE
     WHEN si.ends > :timeNow::timestamp
       AND  si.starts < :timeNow::timestamp THEN 1
     WHEN si.starts > :timeNow::timestamp THEN 2
     ELSE 3
-  END
+  END, si.starts
 LIMIT :lim
 SQL;
 
         $stmt = $con->prepare($sql);
         
-        $utcNowStr = $utcNow->format("Y-m-d H:i:s");
+        $utcNowStr = $utcNow->format(DEFAULT_TIMESTAMP_FORMAT);
         $stmt->bindValue(':timeNow', $utcNowStr);
         $stmt->bindValue(':timeEnd', $utcEndStr);
         $stmt->bindValue(':lim', $showsToRetrieve);
@@ -1253,7 +1250,7 @@ SQL;
     
         $stmt = $con->prepare($sql);
     
-        $utcNowStr = $utcNow->format("Y-m-d H:i:s");
+        $utcNowStr = $utcNow->format(DEFAULT_TIMESTAMP_FORMAT);
         $stmt->bindValue(':timeNow1', $utcNowStr);
         $stmt->bindValue(':timeNow2', $utcNowStr);
     
@@ -1290,7 +1287,7 @@ SQL;
                             "starts"                  => $rows[$i-1]['starts'],
                             "ends"                    => $rows[$i-1]['ends'],
                             "record"                  => $rows[$i-1]['record'],
-                            "image_path"             => $rows[$i-1]['image_path'],
+                            "image_path"              => $rows[$i-1]['image_path'],
                             "type"                   => "show");
                 }
     
@@ -1348,7 +1345,6 @@ SQL;
                     "starts"                  => $rows[$previousShowIndex]['starts'],
                     "ends"                    => $rows[$previousShowIndex]['ends'],
                     "record"                  => $rows[$previousShowIndex]['record'],
-                    "image_path"              => $rows[$previousShowIndex]['image_path'],
                     "type"                    => "show");
         }
     
@@ -1432,39 +1428,70 @@ SQL;
     }
 
     public static function getStartEndCurrentMonthView() {
-        $first_day_of_calendar_month_view = mktime(0, 0, 0, date("n"), 1);
-        $weekStart = Application_Model_Preference::GetWeekStartDay();
-        while (date('w', $first_day_of_calendar_month_view) != $weekStart) {
-            $first_day_of_calendar_month_view -= 60*60*24;
-        }
-        $last_day_of_calendar_view = $first_day_of_calendar_month_view + 3600*24*42;
 
-        $start = new DateTime("@".$first_day_of_calendar_month_view);
-        $end = new DateTime("@".$last_day_of_calendar_view);
+        $utcTimeZone = new DateTimeZone("UTC");
+
+        //We have to get the start of the day in the user's timezone, and then convert that to UTC.
+        $start = new DateTime("first day of this month", new DateTimeZone(Application_Model_Preference::GetUserTimezone()));
+
+        $start->setTimezone($utcTimeZone); //Covert it to UTC.
+        $monthInterval = new DateInterval("P1M");
+        $end = clone($start);
+        $end->add($monthInterval);
 
         return array($start, $end);
     }
 
+    /** Returns the start and end date that FullCalendar will display for today's month.
+     *
+     *  FullCalendar displays 6 weeks, starting on a Sunday, for a total of 42 days. This function returns 42 days worth
+     *  of data (a few days before, and a few days after.)
+     */
+    public static function getStartEndCurrentMonthPlusView() {
+
+        $utcTimeZone = new DateTimeZone("UTC");
+
+        //We have to get the start of the day in the user's timezone, and then convert that to UTC.
+        $start = new DateTime("first day of this month", new DateTimeZone(Application_Model_Preference::GetUserTimezone()));
+
+        $dayOfWeekNumeric = $start->format('w');
+        $start->sub(new DateInterval("P{$dayOfWeekNumeric}D")); //Subtract the index of the day of the week the month starts on. (adds this many days from the previous month)
+        $start->setTimezone($utcTimeZone); //Covert it to UTC.
+
+        $fullCalendarMonthInterval = new DateInterval("P42D"); //42 days
+        $end = clone($start);
+        $end->add($fullCalendarMonthInterval);
+
+        return array($start, $end);
+    }
+
+
     public static function getStartEndCurrentWeekView() {
-        $first_day_of_calendar_week_view = mktime(0, 0, 0, gmdate("n"), gmdate("j"));
-        $weekStart = Application_Model_Preference::GetWeekStartDay();
-        while (gmdate('w', $first_day_of_calendar_week_view) != $weekStart) {
-            $first_day_of_calendar_week_view -= 60*60*24;
-        }
-        $last_day_of_calendar_view = $first_day_of_calendar_week_view + 3600*24*7;
 
-        $start = new DateTime("@".$first_day_of_calendar_week_view);
-        $end = new DateTime("@".$last_day_of_calendar_view);
+        $weekStartDayNum = Application_Model_Preference::GetWeekStartDay();
+        $utcTimeZone = new DateTimeZone("UTC");
 
+        //We have to get the start of the week in the user's timezone, and then convert that to UTC.
+        $start = new DateTime("Sunday last week", new DateTimeZone(Application_Model_Preference::GetUserTimezone()));
+        $start->add(new DateInterval("P{$weekStartDayNum}D")); //Shift the start date to the station's "Week Starts on Day"
+
+        $start->setTimezone($utcTimeZone); //Covert it to UTC.
+        $weekInterval = new DateInterval("P1W");
+        $end = clone($start);
+        $end->add($weekInterval);
         return array($start, $end);
     }
 
     public static function getStartEndCurrentDayView() {
-        $today = mktime(0, 0, 0, gmdate("n"), gmdate("j"));
-        $tomorrow = $today + 3600*24;
+        $utcTimeZone = new DateTimeZone("UTC");
 
-        $start = new DateTime("@".$today);
-        $end = new DateTime("@".$tomorrow);
+        //We have to get the start of the day in the user's timezone, and then convert that to UTC.
+        $start = new DateTime("today", new DateTimeZone(Application_Model_Preference::GetUserTimezone()));
+
+        $start->setTimezone($utcTimeZone); //Covert it to UTC.
+        $dayInterval = new DateInterval("P1D");
+        $end = clone($start);
+        $end->add($dayInterval);
 
         return array($start, $end);
     }

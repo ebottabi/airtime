@@ -2,8 +2,6 @@
 /* THIS FILE IS NOT MEANT FOR CUSTOMIZING.
  * PLEASE EDIT THE FOLLOWING TO CHANGE YOUR CONFIG:
  * /etc/airtime/airtime.conf
- * /etc/airtime/pypo.cfg
- * /etc/airtime/recorder.cfg
  */
 
 class Config {
@@ -37,6 +35,7 @@ class Config {
         $CC_CONFIG['baseDir'] = $values['general']['base_dir'];
         $CC_CONFIG['baseUrl'] = $values['general']['base_url'];
         $CC_CONFIG['basePort'] = $values['general']['base_port'];
+        $CC_CONFIG['stationId'] = $values['general']['station_id'];
         $CC_CONFIG['phpDir'] = $values['general']['airtime_dir'];
         if (isset($values['general']['dev_env'])) {
             $CC_CONFIG['dev_env'] = $values['general']['dev_env'];
@@ -68,11 +67,8 @@ class Config {
         // Tells us where file uploads will be uploaded to.
         // It will either be set to a cloud storage backend or local file storage.
         $CC_CONFIG["current_backend"] = $cloudStorageValues["current_backend"]["storage_backend"];
-        
+
         $CC_CONFIG['cache_ahead_hours'] = $values['general']['cache_ahead_hours'];
-        
-        $CC_CONFIG['monit_user'] = $values['monit']['monit_user'];
-        $CC_CONFIG['monit_password'] = $values['monit']['monit_password'];
         
 	    // Database config
         $CC_CONFIG['dsn']['username'] = $values['database']['dbuser'];
@@ -90,8 +86,19 @@ class Config {
         $CC_CONFIG['soundcloud-connection-retries'] = $values['soundcloud']['connection_retries'];
         $CC_CONFIG['soundcloud-connection-wait'] = $values['soundcloud']['time_between_retries'];
 
-        if (array_key_exists('memcached', $values) && array_key_exists('servers', $values['memcached'])) {
-            $CC_CONFIG['memcached']['servers'] = $values['memcached']['servers'];
+        $globalAirtimeConfig = "/etc/airtime-saas/".$CC_CONFIG['dev_env']."/airtime.conf";
+        if (!file_exists($globalAirtimeConfig)) {
+            // If the dev env specific airtime.conf doesn't exist default
+            // to the production airtime.conf
+            $globalAirtimeConfig = "/etc/airtime-saas/production/airtime.conf";
+        }
+        $globalAirtimeConfigValues = parse_ini_file($globalAirtimeConfig, true);
+        $CC_CONFIG['soundcloud-client-id'] = $globalAirtimeConfigValues['soundcloud']['soundcloud_client_id'];
+        $CC_CONFIG['soundcloud-client-secret'] = $globalAirtimeConfigValues['soundcloud']['soundcloud_client_secret'];
+        $CC_CONFIG['soundcloud-redirect-uri'] = $globalAirtimeConfigValues['soundcloud']['soundcloud_redirect_uri'];
+
+        if (array_key_exists('memcached', $globalAirtimeConfigValues) && array_key_exists('servers', $globalAirtimeConfigValues['memcached'])) {
+            $CC_CONFIG['memcached']['servers'] = $globalAirtimeConfigValues['memcached']['servers'];
         } else {
             $CC_CONFIG['memcached']['servers'] = null;
         }

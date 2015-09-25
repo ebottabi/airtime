@@ -74,6 +74,8 @@ class CcFiles extends BaseCcFiles {
     /** Used to create a CcFiles object from an array containing metadata and a file uploaded by POST.
      *  This is used by our Media REST API!
      * @param $fileArray An array containing metadata for a CcFiles object.
+     *
+     * @return object the sanitized response
      * @throws Exception
      */
     public static function createFromUpload($fileArray)
@@ -94,7 +96,7 @@ class CcFiles extends BaseCcFiles {
         $tempFilePath = $_FILES['file']['tmp_name'];
 
         try {
-            self::createAndImport($fileArray, $tempFilePath, $originalFilename);
+            return self::createAndImport($fileArray, $tempFilePath, $originalFilename);
         } catch (Exception $e) {
             if (file_exists($tempFilePath)) {
                 unlink($tempFilePath);
@@ -147,7 +149,7 @@ class CcFiles extends BaseCcFiles {
 
             //Only accept files with a file extension that we support.
             $fileExtension = pathinfo($originalFilename, PATHINFO_EXTENSION);
-            if (!in_array(strtolower($fileExtension), explode(",", "ogg,mp3,oga,flac,wav,m4a,mp4,opus"))) {
+            if (!in_array(strtolower($fileExtension), array_values(FileDataHelper::getAudioMimeTypeArray()))) {
                 throw new Exception("Bad file extension.");
             }
 
@@ -203,11 +205,6 @@ class CcFiles extends BaseCcFiles {
                 $cloudFile->save();
 
                 Application_Model_Preference::updateDiskUsage($fileSizeBytes);
-
-                $now = new DateTime("now", new DateTimeZone("UTC"));
-                $file->setDbMtime($now);
-                $file->save();
-
             } else if ($file) {
 
                 // Since we check for this value when deleting files, set it first
@@ -236,14 +233,13 @@ class CcFiles extends BaseCcFiles {
                         $file->setDbFilepath($filePathRelativeToStor);
                     }
                 }
-
-                $now = new DateTime("now", new DateTimeZone("UTC"));
-                $file->setDbMtime($now);
-                $file->save();
-
             } else {
                 throw new FileNotFoundException();
             }
+
+            $now = new DateTime("now", new DateTimeZone("UTC"));
+            $file->setDbMtime($now);
+            $file->save();
         }
         catch (FileNotFoundException $e)
         {
@@ -354,17 +350,19 @@ class CcFiles extends BaseCcFiles {
     /**
      *
      * Strips out the private fields we do not want to send back in API responses
-     * @param $file string a CcFiles object
+     *
+     * @param CcFiles $file a CcFiles object
+     *
+     * @return array
      */
     //TODO: rename this function?
-    public static function sanitizeResponse($file)
-    {
+    public static function sanitizeResponse($file) {
         $response = $file->toArray(BasePeer::TYPE_FIELDNAME);
-    
+
         foreach (self::$privateFields as $key) {
             unset($response[$key]);
         }
-    
+
         return $response;
     }
 
@@ -379,8 +377,12 @@ class CcFiles extends BaseCcFiles {
     public function getFilename()
     {
         $info = pathinfo($this->getAbsoluteFilePath());
+
         //filename doesn't contain the extension because PHP is awful
-        return $info['filename'].".".$info['extension'];
+        $mime = $this->getDbMime();
+        $extension = FileDataHelper::getFileExtensionFromMime($mime);
+
+        return $info['filename'] . $extension;
     }
 
     /**

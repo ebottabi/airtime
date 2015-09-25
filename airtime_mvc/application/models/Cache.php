@@ -7,13 +7,13 @@ class Cache
     {
         $CC_CONFIG = Config::getConfig();
 
-        $instanceId = $CC_CONFIG['rabbitmq']['user'];
-        if (!is_numeric($instanceId)) {
-            throw new Exception("Invalid instance id in " . __FUNCTION__ . ": " . $instanceId);
+        $stationId = $CC_CONFIG['stationId'];
+        if (empty($stationId)) {
+            throw new Exception("Invalid station id in " . __FUNCTION__ . ": " . $stationId);
         }
 
         // We use this extra "namespace key" to implement faux cache clearing.
-        $namespaceKeyKey = "namespace_{$instanceId}";
+        $namespaceKeyKey = "namespace_{$stationId}";
         return $namespaceKeyKey;
     }
 

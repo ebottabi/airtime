@@ -37,6 +37,13 @@ $pages = array(
         'resource'   =>    'schedule'
     ),
     array(
+        'label' => _('Radio Page'),
+        'uri' => '/',
+        'resource' => '',
+        'pages' => array(
+        )
+    ),
+    array(
         'label'      => _('System'),
         'uri'        => '#',
         'resource'   => 'preference',
@@ -67,12 +74,6 @@ $pages = array(
                 'action'     => 'stream-setting'
             ),
             array(
-                'label'      => _('Support Feedback'),
-                'module'     => 'default',
-                'controller' => 'Preference',
-                'action'     => 'support-setting'
-            ),
-            array(
                 'label'      => _('Status'),
                 'module'     => 'default',
                 'controller' => 'systemstatus',
@@ -85,6 +86,12 @@ $pages = array(
                 'controller' => 'listenerstat',
                 'action'     => 'index',
                 'resource'   => 'listenerstat'
+            ),
+            array(
+                'label'      => _('Embeddable Widgets'),
+                'module'     => 'default',
+                'controller' => 'embeddablewidgets',
+                'action'     => 'index'
             )
         )
     ),
@@ -116,7 +123,7 @@ $pages = array(
         'pages'      => array(
             array(
                 'label'      => _('Help Center'),
-                'uri'        => "http://help.sourcefabric.org/",
+                'uri'        => HELP_URL,
                 'target'     => "_blank"
             ),
             array(
@@ -127,8 +134,13 @@ $pages = array(
                 'resource'   =>    'dashboard'
             ),
             array(
+                'label'      => _('FAQ'),
+                'uri'        => FAQ_URL,
+                'target'     => "_blank"
+            ),
+            array(
                 'label'      => _('User Manual'),
-                'uri'        => "http://sourcefabric.booktype.pro/airtime-25-for-broadcasters/",
+                'uri'        => USER_MANUAL_URL,
                 'target'     => "_blank"
             ),
             array(
@@ -137,6 +149,11 @@ $pages = array(
                 'controller' => 'dashboard',
                 'action'     => 'about',
                 'resource'   =>    'dashboard'
+            ),
+            array(
+                'label'      => _(sprintf("Help Translate %s", PRODUCT_NAME)),
+                'uri'        => AIRTIME_TRANSIFEX_URL,
+                'target'     => "_blank"
             )
         )
     ),

@@ -99,6 +99,11 @@ function dayClick(date, allDay, jsEvent, view){
             chosenDate = selected.getFullYear() + '-' + pad(selected.getMonth()+1,2) + '-' + pad(selected.getDate(),2);
             var endDateFormat = endDateTime.getFullYear() + '-' + pad(endDateTime.getMonth()+1,2) + '-' + pad(endDateTime.getDate(),2);
 
+
+            //TODO: This should all be refactored into a proper initialize() function for the show form.
+            $("#add_show_start_now-future").attr('checked', 'checked');
+            $("#add_show_start_now-now").removeProp('disabled');
+            setupStartTimeWidgets(); //add-show.js
             $("#add_show_start_date").val(chosenDate);
             $("#add_show_end_date_no_repeat").val(endDateFormat);
             $("#add_show_end_date").val(endDateFormat);
@@ -110,6 +115,8 @@ function dayClick(date, allDay, jsEvent, view){
             $("#schedule-show-when").show();
 
             openAddShowForm();
+            makeAddShowButton();
+            toggleAddShowButton();
         }
     }
 }
@@ -193,31 +200,6 @@ function eventRender(event, element, view) {
             });
 
         $(element).find(".fc-event-content").append(div);
-    }
-   
-    //add the record/rebroadcast/soundcloud icons if needed
-    if (event.record === 1) {
-        if (view.name === 'agendaDay' || view.name === 'agendaWeek') {
-            if (event.soundcloud_id === -1) {
-                $(element).find(".fc-event-time").before('<span class="small-icon recording"></span>');
-            } else if ( event.soundcloud_id > 0) {
-                $(element).find(".fc-event-time").before('<span class="small-icon recording"></span><span class="small-icon soundcloud"></span>');
-            } else if (event.soundcloud_id === -2) {
-                $(element).find(".fc-event-time").before('<span class="small-icon recording"></span><span class="small-icon progress"></span>');
-            } else if (event.soundcloud_id === -3) {
-                $(element).find(".fc-event-time").before('<span class="small-icon recording"></span><span class="small-icon sc-error"></span>');
-            }
-        } else if (view.name === 'month') {
-            if(event.soundcloud_id === -1) {
-                $(element).find(".fc-event-title").after('<span class="small-icon recording"></span>');
-            } else if (event.soundcloud_id > 0) {
-                $(element).find(".fc-event-title").after('<span class="small-icon recording"></span><span class="small-icon soundcloud"></span>');
-            } else if (event.soundcloud_id === -2) {
-                $(element).find(".fc-event-title").after('<span class="small-icon recording"></span><span class="small-icon progress"></span>');
-            } else if (event.soundcloud_id === -3) {
-                $(element).find(".fc-event-title").after('<span class="small-icon recording"></span><span class="small-icon sc-error"></span>');
-            }
-        }
     }
 
     if (event.record === 0 && event.rebroadcast === 0) {
@@ -361,15 +343,6 @@ function windowResize() {
 
 function preloadEventFeed () {
     createFullCalendar({calendarInit: calendarPref});
-
-/*
-    var url = baseUrl+'Schedule/event-feed-preload';
-    var d = new Date();
-    $.post(url, {format: "json", cachep: d.getTime()}, function(json){
-        calendarEvents = json.events;
-        createFullCalendar({calendarInit: calendarPref});
-    });
-   */
 }
 
 var initialLoad = true;
@@ -388,6 +361,7 @@ function getFullCalendarEvents(start, end, callback) {
         var d = new Date();
             $.post(url, {format: "json", start: start_date, end: end_date, cachep: d.getTime()}, function(json){
                 callback(json.events);
+                getUsabilityHint();
             });
     }
 }

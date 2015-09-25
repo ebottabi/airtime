@@ -63,25 +63,6 @@ function confirmCancelRecordedShow(show_instance_id){
     }
 }
 
-function uploadToSoundCloud(show_instance_id, el){
-    
-    var url = baseUrl+"Schedule/upload-to-sound-cloud",
-    	$el = $(el),
-    	$span = $el.find(".soundcloud");
-    
-    $.post(url, {id: show_instance_id, format: "json"});
-    
-    //first upload to soundcloud.
-    if ($span.length === 0){
-        $span = $("<span/>", {"class": "progress"});
-        
-        $el.find(".fc-event-title").after($span);
-    }
-    else {
-        $span.removeClass("soundcloud").addClass("progress");
-    }
-}
-
 function checkCalendarSCUploadStatus(){
     var url = baseUrl+'Library/get-upload-to-soundcloud-status',
         span,
@@ -173,6 +154,7 @@ function buildScheduleDialog (json, instance_id) {
                 "class": "btn",
                 click: function() {
                     $(this).dialog("close");
+                    //getUsabilityHint();
                 }
             }
         ]
@@ -337,12 +319,14 @@ function alertShowErrorAndReload(){
 }
 
 $(document).ready(function() {
+
     checkCalendarSCUploadStatus();
     
     $.contextMenu({
         selector: 'div.fc-event',
         trigger: "left",
         ignoreRightClick: true,
+        className: 'calendar-context-menu',
         
         build: function($el, e) {
             var data, 
@@ -419,24 +403,6 @@ $(document).ready(function() {
                         });
                     };
                     oItems.content.callback = callback;
-                }
-                
-                //define a soundcloud upload callback.
-                if (oItems.soundcloud_upload !== undefined) {
-                    
-                    callback = function() {
-                        uploadToSoundCloud(data.id, this.context);
-                    };
-                    oItems.soundcloud_upload.callback = callback;
-                }
-                
-                //define a view on soundcloud callback.
-                if (oItems.soundcloud_view !== undefined) {
-                    
-                    callback = function() {
-                        window.open(oItems.soundcloud_view.url);
-                    };
-                    oItems.soundcloud_view.callback = callback;
                 }
                 
                 //define a cancel recorded show callback.
@@ -518,6 +484,7 @@ $(document).ready(function() {
             });
 
             return {
+                className: 'calendar-context-menu',
                 items: items,
                 determinePosition : function($menu, x, y) {
                     $menu.css('display', 'block')

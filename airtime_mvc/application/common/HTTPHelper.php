@@ -42,3 +42,26 @@ class Application_Common_HTTPHelper
         return $stationUrl;
     }
 }
+
+class ZendActionHttpException extends Exception {
+
+    /**
+     * @param Zend_Controller_Action $action
+     * @param int                    $statusCode
+     * @param string                 $message
+     * @param int                    $code
+     * @param Exception              $previous
+     *
+     * @throws Zend_Controller_Response_Exception
+     */
+    public function __construct(Zend_Controller_Action $action, $statusCode, $message,
+                                $code = 0, Exception $previous = null) {
+        Logging::error("Error in action " . $action->getRequest()->getActionName()
+                      . " with status code $statusCode: $message");
+        $action->getResponse()
+            ->setHttpResponseCode($statusCode)
+            ->appendBody($message);
+        parent::__construct($message, $code, $previous);
+    }
+
+}
