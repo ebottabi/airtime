@@ -26,7 +26,12 @@ class Application_Model_Preference
      */
     private static function setValue($key, $value, $isUserValue = false)
     {
-        $cache = new Cache();
+        if (function_exists("xcache_isset")) {
+            $cache = new XCacheCache();
+        }
+        else {
+            $cache = new DisabledCache();
+        }
         $con = Propel::getConnection(CcPrefPeer::DATABASE_NAME);
         $con->beginTransaction();
 
@@ -136,9 +141,14 @@ class Application_Model_Preference
         $st->execute();
     }
 
-    private static function getValue($key, $isUserValue = false)
+    private static function getValue($key, $isUserValue = false, $bypassCacheRead = false)
     {
-        $cache = new Cache();
+        if (function_exists("xcache_isset")) {
+            $cache = new XCacheCache();
+        }
+        else {
+            $cache = new DisabledCache();
+        }
         
         try {
             
@@ -151,9 +161,13 @@ class Application_Model_Preference
                 }
             }
 
-            // If the value is already cached, return it
-            $res = $cache->fetch($key, $isUserValue, $userId);
-            if ($res !== false) return $res;
+            if (!$bypassCacheRead) {
+                // If the value is already cached, return it
+                $res = $cache->fetch($key, $isUserValue, $userId);
+                if ($res["found"] === true) {
+                    return $res["value"];
+                }
+            }
            
             //Check if key already exists
             $sql = "SELECT COUNT(*) FROM cc_pref"
