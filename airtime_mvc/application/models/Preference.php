@@ -26,7 +26,12 @@ class Application_Model_Preference
      */
     private static function setValue($key, $value, $isUserValue = false)
     {
-        $cache = new Cache();
+        if (function_exists("xcache_isset")) {
+            $cache = new XCacheCache();
+        }
+        else {
+            $cache = new DisabledCache();
+        }
         $con = Propel::getConnection(CcPrefPeer::DATABASE_NAME);
 
         //We are using row-level locking in Postgres via "FOR UPDATE" instead of a transaction here
@@ -142,11 +147,17 @@ class Application_Model_Preference
      * @param string $key               the preference key string
      * @param bool|false $isUserValue   select the preference for the current user
      * @param bool|false $forceDefault  only look for default (no user ID) values
+     * @param bool|false $bypassCacheRead Force us to read a fresh value directly from the database.
      * @return mixed the preference value
      */
-    private static function getValue($key, $isUserValue = false, $forceDefault = false)
+    private static function getValue($key, $isUserValue = false, $forceDefault = false, $bypassCacheRead = false)
     {
-        $cache = new Cache();
+        if (function_exists("xcache_isset")) {
+            $cache = new XCacheCache();
+        }
+        else {
+            $cache = new DisabledCache();
+        }
         
         try {
             
@@ -159,9 +170,13 @@ class Application_Model_Preference
                 }
             }
 
-            // If the value is already cached, return it
-            $res = $cache->fetch($key, $isUserValue, $userId);
-            if ($res !== false) return $res;
+            if (!$bypassCacheRead) {
+                // If the value is already cached, return it
+                $res = $cache->fetch($key, $isUserValue, $userId);
+                if ($res["found"] === true) {
+                    return $res["value"];
+                }
+            }
            
             //Check if key already exists
             $sql = "SELECT COUNT(*) FROM cc_pref"
