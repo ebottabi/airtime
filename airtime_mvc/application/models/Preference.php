@@ -1090,7 +1090,7 @@ class Application_Model_Preference
 
     public static function GetLiveStreamMasterUsername()
     {
-        return self::getValue("live_stream_master_username");
+        return self::getValue("live_stream_master_username", false, false, true);
     }
 
     public static function SetLiveStreamMasterPassword($value)
@@ -1100,7 +1100,7 @@ class Application_Model_Preference
 
     public static function GetLiveStreamMasterPassword()
     {
-        return self::getValue("live_stream_master_password");
+        return self::getValue("live_stream_master_password", false, false, true);
     }
 
     public static function SetSourceStatus($sourcename, $status)
@@ -1110,7 +1110,7 @@ class Application_Model_Preference
 
     public static function GetSourceStatus($sourcename)
     {
-        $value = self::getValue($sourcename);
+        $value = self::getValue($sourcename, false, false, true);
         return !($value == null || $value == "false");
     }
 
@@ -1128,7 +1128,7 @@ class Application_Model_Preference
             return "on";
         }
 
-        $value = self::getValue($sourcename."_switch");
+        $value = self::getValue($sourcename."_switch", false, false, true);
         return ($value == null || $value == "off") ? 'off' : 'on';
     }
 
